@@ -14,11 +14,15 @@ spec = importlib.util.spec_from_file_location("s", os.path.join(SD, "segments.py
 m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m); SEG = m.SEGMENTS
 B = os.path.join(SCR, "short_" + os.path.basename(SD)); os.makedirs(B, exist_ok=True)
 SHOTS = {}
-for f in ["shots.json", "v2/shots_v2.json"]:
+for f in cfg.get("shots_files", ["shots.json", "v2/shots_v2.json"]):
     SHOTS.update(json.load(open(os.path.join(SCR, f))))
-CLIPDIR = {"tbd39_end": "v2", "tbd40_fragman": "v2"}
+CLIPDIR = cfg.get("clip_dirs", {"tbd39_end": "v2", "tbd40_fragman": "v2"})
 W, H, FPS, SHOT = 1080, 1920, 30, 1.7
 FG_Y = 560
+def music_path(name):
+    """Music lives in <scratch>/music or, by default, in the repo's assets/music."""
+    p = os.path.join(SCR, "music", name)
+    return p if os.path.exists(p) else os.path.join(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "assets", "music"), name)
 def run(c): subprocess.run(c, check=True)
 
 # ---------- overlays ----------
@@ -108,7 +112,7 @@ def load(p):
     raw = subprocess.check_output(["ffmpeg", "-loglevel", "error", "-i", p, "-f", "f32le", "-ac", "2", "-ar", str(SR), "-"])
     return np.frombuffer(raw, np.float32).reshape(-1, 2).copy()
 voice = np.zeros((N, 2), np.float32); v = load(os.path.join(SD, "voiceover.wav"))[:N]; voice[:len(v)] = v
-mus = load(os.path.join(SCR, "music", cfg["music"]))[int(cfg.get("music_offset", 0) * SR):][:N]
+mus = load(music_path(cfg["music"]))[int(cfg.get("music_offset", 0) * SR):][:N]
 music = np.zeros((N, 2), np.float32); music[:len(mus)] = mus
 env = np.convolve(np.abs(voice.mean(1)), np.ones(2400) / 2400, "same") > 0.01
 env = np.convolve(env.astype(np.float32), np.ones(12000) / 12000, "same")

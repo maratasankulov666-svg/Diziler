@@ -17,6 +17,10 @@ for f in plan.SHOTS_FILES: SHOTS.update(json.load(open(os.path.join(SCR, f))))
 CARDS = json.load(open(os.path.join(SCR, plan.CARDS_DIR, "cards.json")))
 X = 0.4          # crossfade between shots
 FPS = 30
+def music_path(name):
+    """Music lives in <scratch>/music or, by default, in the repo's assets/music."""
+    p = os.path.join(SCR, "music", name)
+    return p if os.path.exists(p) else os.path.join(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "assets", "music"), name)
 def run(cmd): subprocess.run(cmd, check=True)
 
 def span(i):
@@ -141,7 +145,7 @@ def load(path):
 N = int(TOTAL * SR) + SR
 voice = np.zeros((N, 2), np.float32); v = load(os.path.join(VID, "voiceover.wav")); voice[:len(v)] = v[:N]
 def track(name, start, end, offset=0.0):
-    m = load(os.path.join(SCR, "music", name)); seg_ = np.zeros((N, 2), np.float32)
+    m = load(music_path(name)); seg_ = np.zeros((N, 2), np.float32)
     i0, i1, o = int(start * SR), int(end * SR), int(offset * SR)
     need = i1 - i0; src = np.concatenate([m[o:]] + [m] * 3)[:need]
     fade = int(1.2 * SR); env = np.ones(need, np.float32); env[:fade] = np.linspace(0, 1, fade); env[-fade:] = np.linspace(1, 0, fade)

@@ -1,3 +1,4 @@
 segs/
 *.wav
 !samples/*.wav
+__pycache__/

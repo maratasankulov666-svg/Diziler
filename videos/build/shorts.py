@@ -34,6 +34,7 @@ CSS = """html,body{margin:0;background:transparent;font-family:"Inter Display","
 .cap small{display:block;margin-top:24px;font-weight:800;font-size:50px;color:#fff;-webkit-text-stroke:3px #000;paint-order:stroke fill}"""
 def doc(body): return f'<!doctype html><html><head><meta charset="utf-8"><style>{CSS}</style></head><body style="width:{W}px;height:{H}px">{body}</body></html>'
 ov = [dict(id="frame", w=W, h=H, html=doc(f'<div class="top"><div class="kick">{cfg["kicker"]}</div><div class="big">{cfg["title"]}</div></div>'
+                                           f'<div style="position:absolute;left:0;right:0;top:{FG_Y + 608 - 95}px;height:96px;background:linear-gradient(to bottom,rgba(6,7,16,0) 0%,rgba(6,7,16,.97) 50%,rgba(6,7,16,.97) 100%)"></div>'
                                            f'<div class="brand"><i></i>Dizi<b>Vizyon</b> · @DiziiVizyon</div>'))]
 for i, c in enumerate(cfg["captions"]):
     main, _, small = c.partition("||")
@@ -62,10 +63,10 @@ def pick(pool, k, d):
     return name, good[(c * 3) % len(good)][0]   # stride through the trailer for variety
 
 def shot(src, a, d, out, k):
-    z0, z1 = (1318, 1400) if k % 2 == 0 else (1400, 1318)
+    z0, z1 = (1512, 1590) if k % 2 == 0 else (1590, 1512)
     fc = (f"[0:v]split[a][b];"
           f"[a]scale=-2:{H},crop={W}:{H},boxblur=24:3,eq=brightness=-0.18:saturation=1.15[bg];"
-          f"[b]scale=w='trunc(({z0}+({z1}-{z0})*t/{d:.3f})/2)*2':h=-2:eval=frame,crop={W}:608,eq=contrast=1.06:saturation=1.12[fg];"
+          f"[b]scale=w='trunc(({z0}+({z1}-{z0})*t/{d:.3f})/2)*2':h=-2:eval=frame,crop={W}:608:(iw-{W})/2:ih*0.075,eq=contrast=1.06:saturation=1.12[fg];"
           f"[bg][fg]overlay=0:{FG_Y},fps={FPS},setsar=1,format=yuv420p[v]")
     run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{a:.3f}", "-t", f"{d:.3f}", "-i", src, "-filter_complex", fc,
          "-map", "[v]", "-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-r", str(FPS), out])

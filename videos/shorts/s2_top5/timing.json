@@ -1,0 +1,51 @@
+[
+ {
+  "i": 0,
+  "block": "sevdan_a|omur_b|tuzlu_c",
+  "start": 0.3,
+  "end": 5.26,
+  "text": "Bu sonbaharın en çok izlenen beş yeni dizisi! Beşinci sıradan başlıyoruz."
+ },
+ {
+  "i": 1,
+  "block": "gunes_a|gunes_d",
+  "start": 5.56,
+  "end": 7.64,
+  "text": "Beş: Güneşin Doğduğu Yer."
+ },
+ {
+  "i": 2,
+  "block": "anne_a|anne_d",
+  "start": 7.84,
+  "end": 9.28,
+  "text": "Dört: Anne Yarısı."
+ },
+ {
+  "i": 3,
+  "block": "tuzlu_c|tuzlu_e",
+  "start": 9.48,
+  "end": 11.08,
+  "text": "Üç: Tuzlu Kahve."
+ },
+ {
+  "i": 4,
+  "block": "omur_a|omur_b",
+  "start": 11.28,
+  "end": 16.08,
+  "text": "İki: Ömür Usta. Hani şu ekmek almaya çıkıp dönmeyen koca!"
+ },
+ {
+  "i": 5,
+  "block": "sevdan_a|sevdan_c",
+  "start": 16.38,
+  "end": 19.74,
+  "text": "Ve bir numara... Show TV'den Sevdan Bir Ateş!"
+ },
+ {
+  "i": 6,
+  "block": "sevdan_b|sevdan_c|omur_d",
+  "start": 20.14,
+  "end": 24.62,
+  "text": "Sizin favoriniz hangisi? Tam liste ve dizi mezarlığı kanaldaki videoda!"
+ }
+]

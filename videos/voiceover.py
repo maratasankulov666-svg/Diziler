@@ -84,7 +84,11 @@ for i, (block, style, text, pause) in enumerate(SEG):
         w = synth(style, text)
         w = w / (np.abs(w).max() + 1e-9) * 0.9
         heard = check(w)
-        score = difflib.SequenceMatcher(None, norm(text), norm(heard)).ratio()
+        try:
+            from trnorm import normalize as _n; heard_n = _n(heard)
+        except Exception:
+            heard_n = heard
+        score = max(difflib.SequenceMatcher(None, norm(text), norm(h)).ratio() for h in (heard, heard_n))
         emo = "" if ref else f" [{emotion_of(style) or 'plain'}]"
         print(f"[{i:02d}] try{t+1}{emo} score={score:.2f} {time.time()-t0:.0f}s | {heard}", flush=True)
         if best is None or score > best[0]:

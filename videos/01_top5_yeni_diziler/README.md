@@ -83,6 +83,9 @@ Bu sezon ekranlara onlarca yeni dizi geldi ama sadece birkaçı reyting listeler
 
 Reyting verileri: TİAK / Box Office Türkiye (9-15 Kasım 2026).
 
+🎵 Müzik: "Local Forecast - Elevator" ve "Fluffing a Duck" – Kevin MacLeod (incompetech.com)
+Licensed under Creative Commons: By Attribution 4.0 License – http://creativecommons.org/licenses/by/4.0/
+
 #SevdanBirAteş #ÖmürUsta #TuzluKahve #AnneYarısı #GüneşinDoğduğuYer #yenidiziler #türkdizileri
 ```
 

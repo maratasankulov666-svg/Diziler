@@ -2,3 +2,4 @@ segs/
 *.wav
 !samples/*.wav
 __pycache__/
+*.mp4

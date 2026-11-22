@@ -1,0 +1,226 @@
+[
+ {
+  "i": 0,
+  "block": "intro",
+  "start": 0.3,
+  "end": 6.86,
+  "text": "Çaylar demlendi, kumanda elinizde... DiziVizyon'a hoş geldiniz! Ben de sizin dizi dostunuzum."
+ },
+ {
+  "i": 1,
+  "block": "intro",
+  "start": 7.56,
+  "end": 12.52,
+  "text": "Bu sonbahar ekranlara o kadar çok yeni dizi geldi ki, kumandanın pilleri bile yetişemedi."
+ },
+ {
+  "i": 2,
+  "block": "intro",
+  "start": 13.12,
+  "end": 19.52,
+  "text": "Ama reytingler acımasız. Bazı diziler zirveye oturdu... bazıları ise daha adımızı öğrenemeden veda etti."
+ },
+ {
+  "i": 3,
+  "block": "intro",
+  "start": 20.22,
+  "end": 30.78,
+  "text": "Bugün, bu sezon başlayan ve reyting listelerinde en üstte yer alan beş yeni diziyi sıralıyoruz. Sonunda da küçük bir sürprizim var: dizi mezarlığı! Hazırsanız başlıyoruz."
+ },
+ {
+  "i": 4,
+  "block": "5",
+  "start": 31.78,
+  "end": 36.42,
+  "text": "Beşinci sırada... ATV'nin iddialı yapımı, Güneşin Doğduğu Yer!"
+ },
+ {
+  "i": 5,
+  "block": "5",
+  "start": 37.02,
+  "end": 44.86,
+  "text": "Dizinin başrolünde Burak Özçivit var ve Kenan Kozan karakterine hayat veriyor. Yanında Sibel Taşçıoğlu, Görkem Sevindik ve Devrim Yakut gibi güçlü isimler yer alıyor."
+ },
+ {
+  "i": 6,
+  "block": "5",
+  "start": 45.36,
+  "end": 53.52,
+  "text": "Hikaye Almanya'da başlayan bir aşkın Adana'ya uzanan yolculuğunu anlatıyor. Dizi on yedi Eylül'de başladı ve kanalın en önemli kozlarından biri olarak görülüyor."
+ },
+ {
+  "i": 7,
+  "block": "5",
+  "start": 54.02,
+  "end": 59.46,
+  "text": "Bu arada fark ettiniz mi? Bu sezon herkes Almanya'dan dönüyor. Gurbetçiler bile bu kadar sık dönmüyor!"
+ },
+ {
+  "i": 8,
+  "block": "4",
+  "start": 60.36,
+  "end": 64.2,
+  "text": "Dördüncü sırada... NOW ekranlarının sessiz yükselişi, Anne Yarısı!"
+ },
+ {
+  "i": 9,
+  "block": "4",
+  "start": 64.8,
+  "end": 75.84,
+  "text": "Burcu Özberk ve Cihangir Ceyhan'ın başrolünü paylaştığı dizi, Almanya'da hayatını kaybeden kardeşinin mirasını üstlenen bir kadının hikayesini anlatıyor. Hikaye Kapadokya'da başlıyor."
+ },
+ {
+  "i": 10,
+  "block": "4",
+  "start": 76.34,
+  "end": 85.78,
+  "text": "Dizi ilk bölümde oldukça sessiz başladı, hatta final dedikoduları bile çıktı. Ama sonra her hafta biraz daha yükseldi ve haftalık listede ilk ona girmeyi başardı."
+ },
+ {
+  "i": 11,
+  "block": "4",
+  "start": 86.28,
+  "end": 90.92,
+  "text": "Kısacası Anne Yarısı, sınıfın arka sırasında oturup karne gününde herkesi şaşırtan öğrenci gibi!"
+ },
+ {
+  "i": 12,
+  "block": "3",
+  "start": 91.82,
+  "end": 95.66,
+  "text": "Ve üçüncü sırada... Star TV'nin romantik komedisi, Tuzlu Kahve!"
+ },
+ {
+  "i": 13,
+  "block": "3",
+  "start": 96.26,
+  "end": 108.42,
+  "text": "Başrollerde Eda Ece ve Buğra Gülsoy var. Derin köklü bir İstanbul ailesinin kızı, Mehmet ise Amerika'dan dönen bir holding veliahdı. İkisi tanışınca, birbirine hiç benzemeyen iki aile de mecburen bir araya geliyor."
+ },
+ {
+  "i": 14,
+  "block": "3",
+  "start": 108.92,
+  "end": 115.48,
+  "text": "Kadroda Nebahat Çehre ve Binnur Kaya'nın olması da ayrı bir keyif. Komedi ile dramı karıştıran, hafif ama tatlı bir dizi."
+ },
+ {
+  "i": 15,
+  "block": "3",
+  "start": 115.98,
+  "end": 125.26,
+  "text": "Adı da çok yerinde. Kız isteme geleneğini bilenler bilir: damadın kahvesine tuz koymak. Bu dizide tuz kahvede değil, iki ailenin arasında!"
+ },
+ {
+  "i": 16,
+  "block": "2",
+  "start": 126.16,
+  "end": 129.36,
+  "text": "İkinci sıraya geldik... NOW'ın güçlü kozu, Ömür Usta!"
+ },
+ {
+  "i": 17,
+  "block": "2",
+  "start": 129.96,
+  "end": 138.76,
+  "text": "Başrollerde Nurgül Yeşilçay ve Bülent İnal var, yapım Ay Yapım imzalı. Dizi kısa sürede haftanın en çok izlenen yapımları arasına girdi."
+ },
+ {
+  "i": 18,
+  "block": "2",
+  "start": 139.26,
+  "end": 148.06,
+  "text": "Hikaye şöyle: bir kadının kocası bir gün ekmek almaya çıkıyor... ve bir daha geri dönmüyor. Kadın da çocuklarıyla birlikte hayatını yeniden kurmak zorunda kalıyor."
+ },
+ {
+  "i": 19,
+  "block": "2",
+  "start": 148.66,
+  "end": 156.34,
+  "text": "Evet, yıllardır şakasını yaptığımız o efsane, sonunda dizi oldu! Bundan sonra evde biri ekmek almaya çıkacaksa, lütfen telefonunu yanına alsın."
+ },
+ {
+  "i": 20,
+  "block": "1",
+  "start": 157.34,
+  "end": 163.42,
+  "text": "Ve birinci sırada... bu sezonun en çok izlenen yeni dizisi... Show TV'den, Sevdan Bir Ateş!"
+ },
+ {
+  "i": 21,
+  "block": "1",
+  "start": 164.22,
+  "end": 174.14,
+  "text": "Murat Ünalmış ve Özge Özacar'ın başrolünde olduğu dizi, Kapadokya'da geçiyor. Kozaklı ailesinin büyük oğlu Mirza ile Leyla'nın yıllara yayılan, imkansız ve tutkulu aşkını anlatıyor."
+ },
+ {
+  "i": 22,
+  "block": "1",
+  "start": 174.64,
+  "end": 183.6,
+  "text": "Haftalık listede sadece Taşacak Bu Deniz ve Uzak Şehir'in arkasında, üçüncü sırada yer aldı. Yani yeni diziler arasında açık ara lider!"
+ },
+ {
+  "i": 23,
+  "block": "1",
+  "start": 184.2,
+  "end": 188.84,
+  "text": "Kapadokya'da balonlar uçuyor, Mirza ile Leyla'nın aşkı ise reytingleri uçuruyor!"
+ },
+ {
+  "i": 24,
+  "block": "graveyard",
+  "start": 189.84,
+  "end": 193.36,
+  "text": "Ve şimdi... söz verdiğim gibi... dizi mezarlığı."
+ },
+ {
+  "i": 25,
+  "block": "graveyard",
+  "start": 194.16,
+  "end": 197.68,
+  "text": "Bu sezon final kararları, fragmanlardan bile hızlı geldi."
+ },
+ {
+  "i": 26,
+  "block": "graveyard",
+  "start": 198.18,
+  "end": 209.7,
+  "text": "Akın Akınözü'nün Alaaddin Keykubat'ı canlandırdığı Aşk ve Taht, sadece birkaç bölümde vedalaştı. Mercan Köşk yedinci bölümünde, Sevdam Karadeniz ise dördüncü bölümünde final yaptı."
+ },
+ {
+  "i": 27,
+  "block": "graveyard",
+  "start": 210.2,
+  "end": 217.24,
+  "text": "Kanal D'nin Haysiyet dizisi için de final kararı alındı. Dizinin on üçüncü bölümüyle ekrana veda edeceği konuşuluyor."
+ },
+ {
+  "i": 28,
+  "block": "graveyard",
+  "start": 217.74,
+  "end": 223.82,
+  "text": "Bu dizilerin oyuncularına buradan sesleniyorum: üzülmeyin, Türkiye'de bir dizinin bitmesi, yeni bir dizinin başlaması demek!"
+ },
+ {
+  "i": 29,
+  "block": "soon",
+  "start": 224.82,
+  "end": 237.46,
+  "text": "Ve yakında... Aralık ayında iki yeni dizi daha geliyor. Mert Ramazan Demir ve Lizge Cömert'in başrolündeki Susuz Yaz ile, Oktay Kaynarca, Fahriye Evcen ve Caner Cindoruk'un buluştuğu Hamal."
+ },
+ {
+  "i": 30,
+  "block": "outro",
+  "start": 238.26,
+  "end": 247.22,
+  "text": "Peki sizin favoriniz hangisi? Sizce hangi dizi bir sonraki final kurbanı olacak? Tahminlerinizi yorumlara yazın, en komik yorumu bir sonraki videoda okuyacağım."
+ },
+ {
+  "i": 31,
+  "block": "outro",
+  "start": 247.72,
+  "end": 252.36,
+  "text": "Abone olmayı ve bildirimleri açmayı unutmayın. Kumandayı bırakmayın, görüşmek üzere!"
+ }
+]

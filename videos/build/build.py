@@ -124,7 +124,7 @@ def build_footage(sec, idx):
 parts_out = []
 for idx, sec in enumerate(tl):
     if sec["type"] == "card":
-        parts_out.append((os.path.join(SCR, "cards", sec["name"] + ".mp4"), CARDS[sec["name"]]["start"], CARDS[sec["name"]]["end"]))
+        parts_out.append((os.path.join(SCR, plan.CARDS_DIR, sec["name"] + ".mp4"), CARDS[sec["name"]]["start"], CARDS[sec["name"]]["end"]))
     else:
         print("footage", idx, flush=True)
         parts_out.append((build_footage(sec, idx), sec["parts"][0][0], sec["parts"][-1][1]))
@@ -197,5 +197,5 @@ fc = "".join(f"[{i}:v]fps=30,scale=1920:1080,setsar=1,format=yuv420p,tpad=stop_m
      "".join(f"[c{i}]" for i in range(n)) + f"concat=n={n}:v=1:a=0[v]"
 run(["ffmpeg", "-y", "-loglevel", "error", *inp, "-i", os.path.join(B, "mix.wav"), "-filter_complex", fc,
      "-map", "[v]", "-map", f"{n}:a", "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-pix_fmt", "yuv420p",
-     "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart", final])
+     "-af", "loudnorm=I=-14:TP=-1.5:LRA=11", "-ar", "48000", "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart", final])
 print("FINAL", final, round(TOTAL, 2))

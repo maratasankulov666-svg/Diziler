@@ -1,0 +1,3 @@
+segs/
+*.wav
+!samples/*.wav

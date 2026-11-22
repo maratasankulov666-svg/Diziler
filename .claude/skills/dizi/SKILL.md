@@ -50,8 +50,9 @@ EOF
 - Папка видео: `videos/NN_<slug>/` с `segments.py`: список `(block, стиль_на_турецком, текст, пауза)`.
 - Стиль **ведущего** обязателен: фирменное начало «Çaylar demlendi, kumanda elinizde... DiziVizyon'a hoş geldiniz!», конец «Kumandayı bırakmayın, görüşmek üzere!», 1 шутка на блок (про клише турецких сериалов), вопрос зрителям в конце («en iyi tahmini bir sonraki videoda okuyacağım»).
 - Числа писать словами («kırkıncı bölüm»). Стиль-инструкции писать **по-турецки** (английские ломают слова на C/Ç/Ş в начале).
-- Озвучка (VoxCPM2, голос канала `samples/channel_voice_announcer.wav`, авто-проверка Whisper и перегенерация):
-  `/opt/dizi-venv/bin/python videos/voiceover.py videos/NN_<slug> samples/channel_voice_announcer.wav` (≈15–25 с на фразу на CPU; первый запуск качает модель ~5 ГБ). Результат: `voiceover.wav`, `timing.json`, `asr_report.json` (низкий score из-за цифр — норма).
+- Озвучка — **голос канала Ahenk (женский, турецкая LoRA для VoxCPM2, эмоции)**, выбран пользователем 22.11.2026 вместо мужского ведущего (тот звучал недостаточно живо для турок):
+  `/opt/dizi-venv/bin/python videos/voiceover.py videos/NN_<slug>` (без второго аргумента = Ahenk). Эмоция берётся из поля стиля: ключевые слова (şaşkın/şok → surprised, hüzün/duygusal → sad, esprili/neşeli/enerjik/samimi → cheerful, kahkaha → laughing, kızgın → angry, sakin/düşünceli → calm, иначе plain) или прямо имя эмоции. Нужен пакет `trnorm` (ставит setup.sh). ≈30–40 с на фразу на CPU, авто-проверка Whisper. Старый мужской голос: второй аргумент `samples/channel_voice_announcer.wav`.
+  В описание каждого видео добавлять: `🎙️ Seslendirme: Ahenk TTS (ozgurguler/ahenk-tts-tr, CC BY 4.0)`.
 - Пользователю показывай перевод сценария на русский.
 
 ## 5. Монтаж длинного видео

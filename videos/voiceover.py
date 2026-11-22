@@ -1,24 +1,66 @@
-"""Voice a segments.py script with VoxCPM2 in the channel host voice.
+"""Voice a segments.py script. Default voice: Ahenk (VoxCPM2 + Turkish LoRA, female, emotional).
 
 Each segment is checked with Whisper; if the transcript differs too much from the
 script it is regenerated (up to MAX_TRIES). Segments are cached, so a rerun only
-redoes missing ones (delete seg_XX.wav to force a redo).
+redoes missing ones (delete segs/seg_XX.wav to force a redo).
 
-usage: python voiceover.py <video_dir> <reference_voice.wav>
+usage:
+  python voiceover.py <video_dir>                       # Ahenk female voice (channel default since 22.11.2026)
+  python voiceover.py <video_dir> <reference_voice.wav> # old male host voice (VoxCPM2 voice cloning)
+
+Ahenk: the segment's style text is mapped to one of Ahenk's trained emotions
+(surprised, sad, cheerful, laughing, angry, calm, empathetic, or plain). You can also put the
+emotion name directly in the style field. Ahenk weights: CC BY 4.0, credit in the video description.
 """
 import difflib, importlib.util, json, os, re, sys, time
 import numpy as np, scipy.signal as ss, soundfile as sf
 from faster_whisper import WhisperModel
 from voxcpm import VoxCPM
 
-vdir, ref = sys.argv[1], sys.argv[2]
+vdir = sys.argv[1]
+ref = sys.argv[2] if len(sys.argv) > 2 else None
 spec = importlib.util.spec_from_file_location("segments", os.path.join(vdir, "segments.py"))
 mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
 SEG = mod.SEGMENTS
 cache = os.path.join(vdir, "segs"); os.makedirs(cache, exist_ok=True)
 MAX_TRIES, THRESH = 3, 0.88
 
-tts = VoxCPM.from_pretrained("openbmb/VoxCPM2", load_denoiser=False, device="cpu", optimize=False)
+EMOTIONS = ["surprised", "sad", "cheerful", "laughing", "angry", "calm", "empathetic", ""]
+KEYWORDS = [  # Turkish style words -> Ahenk emotion (first match wins)
+    ("laughing", ["kahkaha", "gülerek konuş"]),
+    ("angry", ["kızgın", "öfke", "sinirli"]),
+    ("surprised", ["şaşkın", "şaşır", "şok", "inanamı"]),
+    ("sad", ["hüzün", "üzgün", "duygusal", "içi burk", "ağla"]),
+    ("cheerful", ["esprili", "neşeli", "enerjik", "coşku", "heyecan", "gülümse", "hafif gülerek", "samimi"]),
+    ("empathetic", ["şefkat", "teselli", "sıcak"]),
+    ("calm", ["sakin", "düşünceli"]),
+]
+def emotion_of(style):
+    s = style.lower()
+    if s in EMOTIONS: return s
+    for emo, words in KEYWORDS:
+        if any(w in s for w in words): return emo
+    return ""   # plain reading (ciddi, gergin, gizemli ...)
+
+if ref:
+    tts = VoxCPM.from_pretrained("openbmb/VoxCPM2", load_denoiser=False, device="cpu", optimize=False)
+    def synth(style, text):
+        return tts.generate(text=f"({style}){text}", reference_wav_path=ref, cfg_value=2.0, inference_timesteps=10)
+else:
+    from huggingface_hub import snapshot_download
+    from trnorm import normalize
+    from voxcpm.model.voxcpm import LoRAConfig
+    d = snapshot_download("ozgurguler/ahenk-tts-tr", allow_patterns=["lora_*", "*.py", "instructions_tr.json", "config.json"])
+    sys.path.insert(0, d)
+    from instruction_pick import compose, pick
+    from pause_clean import clean
+    cfg = json.load(open(os.path.join(d, "lora_config.json"), encoding="utf-8"))["lora_config"]
+    tts = VoxCPM.from_pretrained("openbmb/VoxCPM2", load_denoiser=False, optimize=False, device="cpu",
+                                 lora_config=LoRAConfig(**cfg), lora_weights_path=d)
+    def synth(style, text):
+        ins, mt, _ = pick(emotion_of(style), normalize(text), "auto")
+        w = tts.generate(text=compose(ins, mt), cfg_value=2.0, inference_timesteps=16, normalize=False)
+        return clean(w, tts.tts_model.sample_rate)[0]
 SR = tts.tts_model.sample_rate
 asr = WhisperModel("small", device="cpu", compute_type="int8")
 
@@ -39,11 +81,12 @@ for i, (block, style, text, pause) in enumerate(SEG):
     best = None
     for t in range(MAX_TRIES):
         t0 = time.time()
-        w = tts.generate(text=f"({style}){text}", reference_wav_path=ref, cfg_value=2.0, inference_timesteps=10)
+        w = synth(style, text)
         w = w / (np.abs(w).max() + 1e-9) * 0.9
         heard = check(w)
         score = difflib.SequenceMatcher(None, norm(text), norm(heard)).ratio()
-        print(f"[{i:02d}] try{t+1} score={score:.2f} {time.time()-t0:.0f}s | {heard}", flush=True)
+        emo = "" if ref else f" [{emotion_of(style) or 'plain'}]"
+        print(f"[{i:02d}] try{t+1}{emo} score={score:.2f} {time.time()-t0:.0f}s | {heard}", flush=True)
         if best is None or score > best[0]:
             best = (score, w, heard)
         if score >= THRESH:

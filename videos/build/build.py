@@ -1,17 +1,20 @@
-"""Assemble video #1: 3D cards + trailer footage sections + overlays + mixed audio.
+"""Assemble a DiziVizyon video: 3D cards + footage sections + overlays + mixed audio.
 
-usage: python3 build.py <scratch_dir>
-scratch_dir holds: clips/*.mp4, shots.json, cards/*.mp4 + cards.json, music/*.mp3
+usage: python3 build.py <scratch_dir> <video_dir>
+video_dir holds segments.py, timing.json, voiceover.wav and plan.py (pools, overlays, timeline, music).
+scratch_dir holds the downloaded clips, shots json, rendered cards and music.
 """
-import json, math, os, subprocess, sys
+import importlib.util, json, math, os, subprocess, sys
 import numpy as np, soundfile as sf
 
-SCR = sys.argv[1]
-VID = "/home/user/Diziler/videos/01_top5_yeni_diziler"
-B = os.path.join(SCR, "build"); os.makedirs(B, exist_ok=True)
+SCR, VID = sys.argv[1], sys.argv[2]
+spec_ = importlib.util.spec_from_file_location("plan", os.path.join(VID, "plan.py"))
+plan = importlib.util.module_from_spec(spec_); spec_.loader.exec_module(plan)
+B = os.path.join(SCR, plan.BUILD_DIR); os.makedirs(B, exist_ok=True)
 T = json.load(open(os.path.join(VID, "timing.json")))
-SHOTS = json.load(open(os.path.join(SCR, "shots.json")))
-CARDS = json.load(open(os.path.join(SCR, "cards", "cards.json")))
+SHOTS = {}
+for f in plan.SHOTS_FILES: SHOTS.update(json.load(open(os.path.join(SCR, f))))
+CARDS = json.load(open(os.path.join(SCR, plan.CARDS_DIR, "cards.json")))
 X = 0.4          # crossfade between shots
 FPS = 30
 def run(cmd): subprocess.run(cmd, check=True)
@@ -20,84 +23,21 @@ def span(i):
     s = 0.0 if i == 0 else (T[i - 1]["end"] + T[i]["start"]) / 2
     e = (T[i]["end"] + T[i + 1]["start"]) / 2 if i + 1 < len(T) else T[i]["end"]
     return round(s, 3), round(e, 3)
-
-P = {k: sorted(n for n in SHOTS if n.startswith(k + "_")) for k in ["gunes", "anne", "tuzlu", "omur", "sevdan"]}
-TOP = sum(P.values(), [])
-DEAD = ["ask", "mercan", "sevdam", "haysiyet"]
-
-# ---------- overlays ----------
-bars = {
-    "bar_top": dict(kind="bar", title="2026–2027 Sezonu · Top 5 Yeni Dizi", meta="REYTİNG: TİAK / BOX OFFICE TÜRKİYE · 9-15 KASIM"),
-    "bar5": dict(kind="bar", rank=5, title="Güneşin Doğduğu Yer", meta="ATV · TİMSBİ PRODUCTIONS"),
-    "bar4": dict(kind="bar", rank=4, title="Anne Yarısı", meta="NOW · NTC MEDYA"),
-    "bar3": dict(kind="bar", rank=3, title="Tuzlu Kahve", meta="STAR TV · POLL FILMS"),
-    "bar2": dict(kind="bar", rank=2, title="Ömür Usta", meta="NOW · AY YAPIM"),
-    "bar1": dict(kind="bar", rank=1, title="Sevdan Bir Ateş", meta="SHOW TV · CNP FİLM"),
-    "bar_dead": dict(kind="bar", title="Dizi Mezarlığı 💀", meta="BU SEZON ERKEN FİNAL YAPAN DİZİLER"),
-    "bar_soon": dict(kind="bar", title="Yakında: Susuz Yaz", meta="AY YAPIM · ARALIK 2026"),
-    "stamp": dict(kind="stamp", text="FİNAL"),
-}
-caps = {  # segment index -> overlay
-    1: dict(kind="chip", text="📺 Bu sonbahar onlarca yeni dizi başladı"),
-    2: dict(kind="chip", text="📈 Bazıları zirvede… 💀 bazıları finalde"),
-    3: dict(kind="center", text="TOP 5 YENİ DİZİ", small="+ sonunda: Dizi Mezarlığı 💀"),
-    5: dict(kind="chip", text="⭐ Burak Özçivit · Kenan Kozan"),
-    6: dict(kind="chip", text="✈️ Almanya ➜ Adana · 17 Eylül'den beri ATV'de"),
-    7: dict(kind="meme", text="HERKES ALMANYA'DAN DÖNÜYOR 😂"),
-    9: dict(kind="chip", text="⭐ Burcu Özberk · Cihangir Ceyhan"),
-    10: dict(kind="chip", text="📈 Sessiz başlangıç ➜ her hafta yükseliş"),
-    11: dict(kind="meme", text="ARKA SIRADAN KARNE ŞAMPİYONU 😎"),
-    13: dict(kind="chip", text="⭐ Eda Ece · Buğra Gülsoy"),
-    14: dict(kind="chip", text="⭐ Nebahat Çehre · Binnur Kaya"),
-    15: dict(kind="meme", text="TUZ KAHVEDE DEĞİL, AİLELER ARASINDA ☕🧂"),
-    17: dict(kind="chip", text="⭐ Nurgül Yeşilçay · Bülent İnal"),
-    18: dict(kind="chip", text="🍞 Koca ekmek almaya çıktı… ve dönmedi"),
-    19: dict(kind="meme", text="EKMEK ALMAYA ÇIKAN TELEFONUNU ALSIN! 📱"),
-    21: dict(kind="chip", text="⭐ Murat Ünalmış · Özge Özacar · Kapadokya"),
-    22: dict(kind="chip", text="🔥 Haftalık Top 10'da 3. sıra · Yeni diziler arasında lider"),
-    23: dict(kind="meme", text="BALONLAR UÇUYOR, REYTİNGLER UÇUYOR 🎈"),
-    25: dict(kind="meme", text="FİNAL KARARI FRAGMANDAN HIZLI ⚡"),
-    27: dict(kind="chip", text="⚰️ Haysiyet · Kanal D · 13. bölümde veda"),
-    28: dict(kind="meme", text="BİR DİZİ BİTER, YENİSİ BAŞLAR 😅"),
-    30: dict(kind="center", text="SİZİN FAVORİNİZ HANGİSİ? 💬", small="Yorumlara yazın, en komiği bir sonraki videoda!"),
-}
-sub26 = [dict(kind="chip", text="⚰️ Aşk ve Taht · ATV"), dict(kind="chip", text="⚰️ Mercan Köşk · ATV · 7 bölüm"),
-         dict(kind="chip", text="⚰️ Sevdam Karadeniz · NOW")]
-spec = [dict(id=k, **v) for k, v in bars.items()] + [dict(id=f"cap{i}", **v) for i, v in caps.items()] + \
-       [dict(id=f"cap26_{j}", **v) for j, v in enumerate(sub26)]
-json.dump(spec, open(os.path.join(B, "ov.json"), "w"), ensure_ascii=False)
-OV = os.path.join(B, "ov")
-if not os.path.exists(os.path.join(OV, "stamp.png")):
-    env = dict(os.environ, NODE_PATH=subprocess.check_output(["npm", "root", "-g"], text=True).strip())
-    subprocess.run(["node", "/home/user/Diziler/videos/build/overlays.js", os.path.join(B, "ov.json"), OV], check=True, env=env)
-
-# ---------- timeline ----------
 def fsec(parts, bar, caps_, gray=False, stamp=False):
     return dict(type="footage", parts=parts, bar=bar, caps=caps_, gray=gray, stamp=stamp)
 def cap(i, oid=None, s=None, e=None):
     a, b = span(i)
     return (s if s is not None else a + .25, e if e is not None else b - .1, oid or f"cap{i}")
 
-tl = [dict(type="card", name="intro")]
-tl.append(fsec([(span(1)[0], span(1)[1], TOP, False), (span(2)[0], span(2)[1], DEAD + TOP[:3], False), (span(3)[0], span(3)[1], TOP, False)],
-               "bar_top", [cap(1), cap(2), cap(3)]))
-blocks = [(4, "rank5", "gunes", "bar5"), (8, "rank4", "anne", "bar4"), (12, "rank3", "tuzlu", "bar3"),
-          (16, "rank2", "omur", "bar2"), (20, "rank1", "sevdan", "bar1")]
-for k, (i0, card, key, bar) in enumerate(blocks):
-    tl.append(dict(type="card", name=card))
-    segs = [i0 + 1, i0 + 2, i0 + 3]
-    tl.append(fsec([(span(segs[0])[0], span(segs[-1])[1], P[key], False)], bar, [cap(j) for j in segs]))
-tl.append(dict(type="card", name="grave"))
-s26, e26 = span(26); th = (e26 - s26) / 3
-parts = [(span(25)[0], span(25)[1], DEAD, True)] + [(s26 + j * th, s26 + (j + 1) * th, [d], True) for j, d in enumerate(DEAD[:3])] + \
-        [(span(27)[0], span(27)[1], ["haysiyet"], True), (span(28)[0], span(28)[1], DEAD, True)]
-tl.append(fsec(parts, "bar_dead", [cap(25)] + [(s26 + j * th + .2, s26 + (j + 1) * th - .1, f"cap26_{j}") for j in range(3)] + [cap(27), cap(28)],
-               gray=True, stamp=True))
-s29, e29 = span(29)
-tl.append(fsec([(s29, CARDS["soon"]["start"], ["susuz"], False)], "bar_soon", []))
-tl.append(dict(type="card", name="soon"))
-tl.append(fsec([(span(30)[0], span(30)[1], TOP, False)], "bar_top", [cap(30)]))
-tl.append(dict(type="card", name="end"))
+bars, caps, extra, tl = plan.layout(span, cap, fsec, CARDS, SHOTS)
+spec = [dict(id=k, **v) for k, v in bars.items()] + [dict(id=f"cap{i}", **v) for i, v in caps.items()] + \
+       [dict(id=k, **v) for k, v in extra.items()]
+json.dump(spec, open(os.path.join(B, "ov.json"), "w"), ensure_ascii=False)
+OV = os.path.join(B, "ov")
+if not os.path.exists(os.path.join(OV, ".done")):
+    env = dict(os.environ, NODE_PATH=subprocess.check_output(["npm", "root", "-g"], text=True).strip())
+    subprocess.run(["node", "/home/user/Diziler/videos/build/overlays.js", os.path.join(B, "ov.json"), OV], check=True, env=env)
+    open(os.path.join(OV, ".done"), "w").close()
 
 # ---------- shot picker ----------
 cursor = {}
@@ -112,9 +52,17 @@ def windows(name):
         else:
             out.append((a, L))
     return out
-WIN = {n: windows(n) for n in set(TOP + DEAD + ["susuz"])}
-if not WIN["susuz"]:
-    WIN["susuz"] = [(5 + j * 3.0, 3.0) for j in range(20)]
+def windows_in(key):
+    """'name' -> all windows; 'name@a-b' -> windows inside [a,b] (fixed 2.6s windows if none detected)."""
+    if "@" not in key:
+        w = windows(key)
+        return w or [(5 + j * 3.0, 3.0) for j in range(20)]
+    name, rng = key.split("@"); a, b = map(float, rng.split("-"))
+    w = [(s, L) for s, L in windows(name) if s >= a and s + L <= b]
+    return w or [(a + j * 2.6, 2.6) for j in range(max(1, int((b - a) // 2.6)))]
+ALL = {k for sec in tl if sec["type"] == "footage" for p in sec["parts"] for k in p[2]}
+WIN = {k: windows_in(k) for k in ALL}
+def srcfile(key): return os.path.join(SCR, plan.CLIP_DIRS.get(key.split("@")[0], "clips"), key.split("@")[0] + ".mp4")
 def pick(pool, d, k):
     for tries in range(len(pool)):
         n = pool[(k + tries) % len(pool)]
@@ -148,7 +96,7 @@ def build_footage(sec, idx):
         for j in range(n):
             name, a = pick(pool, d, k)
             c = os.path.join(B, f"s{idx:02d}_{k:02d}.mp4")
-            shot_clip(os.path.join(SCR, "clips", name + ".mp4"), a, d, gray, k, c)
+            shot_clip(srcfile(name), a, d, gray, k, c)
             clips.append((c, d)); k += 1
     inp, fc = [], []
     for c, d in clips: inp += ["-i", c]
@@ -198,14 +146,12 @@ def track(name, start, end, offset=0.0):
     need = i1 - i0; src = np.concatenate([m[o:]] + [m] * 3)[:need]
     fade = int(1.2 * SR); env = np.ones(need, np.float32); env[:fade] = np.linspace(0, 1, fade); env[-fade:] = np.linspace(1, 0, fade)
     seg_[i0:i1] = src * env[:, None]; return seg_
-g0 = CARDS["grave"]["start"]; s0 = CARDS["soon"]["start"] - 6.5
-music = track("Local_Forecast_-_Elevator.mp3", 0, g0 + 0.6) + track("Fluffing_a_Duck.mp3", g0, s0 + 0.6, 2.0) + \
-        track("Local_Forecast_-_Elevator.mp3", s0, TOTAL, 40.0)
+music = sum(track(*m) for m in plan.music(CARDS, TOTAL))
 # ducking: music loud when voice silent
 mono = np.abs(voice.mean(1)); win = int(0.05 * SR)
 envv = np.convolve(mono, np.ones(win) / win, "same"); active = (envv > 0.01).astype(np.float32)
 sm = int(0.25 * SR); active = np.convolve(active, np.ones(sm) / sm, "same")
-gain = 0.30 - 0.21 * np.clip(active * 1.5, 0, 1)
+gain = plan.MUSIC_LOUD - (plan.MUSIC_LOUD - plan.MUSIC_DUCK) * np.clip(active * 1.5, 0, 1)
 music *= gain[:, None]
 # sfx
 rng = np.random.default_rng(1); sfx = np.zeros((N, 2), np.float32)
@@ -241,7 +187,7 @@ sf.write(os.path.join(B, "mix.wav"), mix, SR)
 # ---------- final ----------
 lst = os.path.join(B, "concat.txt")
 open(lst, "w").write("".join(f"file '{f}'\n" for f, _, _ in parts_out))
-final = os.path.join(VID, "DiziVizyon_Top5_Yeni_Diziler.mp4")
+final = os.path.join(VID, plan.FINAL)
 inp = []
 for f, _, _ in parts_out: inp += ["-i", f]
 n = len(parts_out)

@@ -27,6 +27,7 @@
 | S1 | Short «Adil ölüyor mu?» (30 с) | `videos/shorts/s1_tasacak` | готово |
 | S2 | Short «Top 5 yeni dizi» (26 с) | `videos/shorts/s2_top5` | готово |
 | S1-A | Short «Adil ölüyor mu?» голосом Ahenk | `videos/shorts/s1_tasacak_ahenk` | готово 22.11, на замену/тест S1 |
+| 4 | TBD: разбор 2-го фрагмента 40-й серии (3:12), новый формат с cold open | `videos/04_tasacak_40_2fragman` | готово 23.11 (~23:10 TR) |
 | 3 | Taşacak Bu Deniz: актёры в реальной жизни (5:38), голос Ahenk | `videos/03_tasacak_oyuncular_gercek_hayat` | готово 22.11, загрузка на усмотрение пользователя |
 
 ## Уроки (22.11.2026)
@@ -99,3 +100,4 @@ mask = remove(img, session=new_session('u2net_human_seg'), only_mask=True)
 - Сначала 30–40 с ключевых моментов фрагмента с родным звуком, турецкими субтитрами и красной плашкой «NN. BÖLÜM FRAGMANI» (`videos/build/fragman_intro.py`). Потом обзор голосом ведущего.
 - Фрагмент целиком не показываем: риск заявки Content ID.
 - Никаких 3D-квадратов в начале и между блоками. Крючок должен быть с первого кадра, переходы делаются прямо по кадрам.
+- 23.11: 2-й фрагмент TBD 40 вышел на Dailymotion около 22:30 по Турции (позже обычного 21:50), сначала только в 480p.

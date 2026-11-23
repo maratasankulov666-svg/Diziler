@@ -2,7 +2,7 @@
 BUILD_DIR = "build_v5"
 CARDS_DIR = "cards_v5"
 SHOTS_FILES = ["v5c_shots.json", "v5d_shots.json"]
-CLIP_DIRS = {"fr75": "v5c", "f74a": "v5c", "f74b": "v5c", "ep73p": "v5d"}
+CLIP_DIRS = {"sadakat": "v5c", "fr75": "v5c", "f74a": "v5c", "f74b": "v5c", "ep73p": "v5d"}
 FINAL = "body.mp4"
 MUSIC_LOUD, MUSIC_DUCK = 0.24, 0.08
 
@@ -53,10 +53,10 @@ def layout(span, cap, fsec, CARDS, SHOTS):
         fsec([part(2, [ep(0, 125), "f74a@8-66"]), part(3, [ep(125, 275), ep(550, 625)])], "barF", [cap(3)]),
         fsec([part(4, [fr(8, 17)]), part(5, [fr(19, 26), ep(625, 760)]), part(6, [ep(625, 760)])], "barF",
              [cap(i) for i in (4, 5, 6)]),
-        fsec([part(7, [fr(16, 22)]), part(8, [ep(550, 625), ep(860, 895)])], "barF", [cap(7), cap(8)]),
+        fsec([part(7, ["sadakat"]), part(8, [ep(550, 625), ep(860, 895)])], "barF", [cap(7), cap(8)]),
         fsec([part(9, [fr(26, 40)]), part(10, [fr(27, 40)]), part(11, [fr(26, 40)]), part(12, [fr(40, 57)]),
               part(13, [fr(40, 57), ep(625, 760)])], "barF", [cap(i) for i in (10, 11, 12, 13)]),
-        fsec([part(14, [fr(57, 68)]), part(15, ["f74b@8-60", ep(275, 400)]), part(16, [ep(550, 625), fr(16, 22)]),
+        fsec([part(14, [fr(57, 68)]), part(15, ["f74b@8-60", ep(275, 400)]), part(16, [ep(550, 625), "sadakat"]),
               part(17, [ep(400, 550)])], "barT", [cap(i) for i in (14, 15, 16, 17)]),
         fsec([part(18, [fr(8, 68)]), part(19, [ep(0, 150), fr(40, 60)])], "barT", [cap(18)]),
     ]

@@ -1,6 +1,6 @@
 # Short #4: Uzak Şehir 75. bölüm fragmanı — nişan bozuluyor, Sadakat'in elinde silah. (block=pool, style, text, pause)
 SEGMENTS = [
-    ("fr75@16-22", "Şaşkın ve merak uyandıran",
+    ("sadakat", "Şaşkın ve merak uyandıran",
      "Uzak Şehir'de Sadakat Hanım'ın elinde silah!", 0.3),
     ("fr75@8-15", "Duygusal ve hüzünlü, içi burkularak",
      "Yetmiş beşinci bölüm fragmanında Alya, Cihan'dan tek bir şey istiyor: sadece bir gece dünya bizi unutsun.", 0.3),

@@ -2,4 +2,4 @@
  "captions": ["SADAKAT'İN ELİNDE SİLAH 🔫", "“Sadece bir gece||dünya bizi unutsun”", "BERFİN'İN SIRRI ÇIKTI||Cihan nişanı bozuyor 💍", "HASTANEDEN KOŞAN KİM? 🏥||Fragmanın son saniyesi", "SİLAH KİME? 💬||Tam analiz kanalda 👆"],
  "music": "Investigations.mp3", "music_offset": 40, "out": "Short_Uzak_Sehir_75_Sadakat.mp4",
  "shots_files": ["v5c_shots.json"],
- "clip_dirs": {"fr75": "v5c"}}
+ "clip_dirs": {"fr75": "v5c", "sadakat": "v5c"}}

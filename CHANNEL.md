@@ -82,3 +82,20 @@ mask = remove(img, session=new_session('u2net_human_seg'), only_mask=True)
 #    тёплый цвет (255,236,205), режим screen, к низу кадра затухает
 ```
 Готовые примеры: `videos/02_tasacak_bu_deniz_39_40/thumbnail_trt_style_v4.jpg` (последний, одобрен) и шаблон `videos/build/thumb_trt_style.html`.
+
+## Сериал №2: Uzak Şehir (Kanal D)
+- Выходит в понедельник в 20:00. Производство Ay Yapım / AyNA. Действие в Мардине (деревня Нарлы, Мидьят).
+- Главные роли: Ozan Akbaba — Cihan Albora, Sinem Ünsal — Alya.
+- 74-я серия выходит 23.11, сейчас идёт 3-й сезон.
+- **Источник видео — официальный сайт Kanal D**, всё в 1080p, без перезаливов:
+  - фрагменты: `kanald.com.tr/uzak-sehir/fragmanlar/uzak-sehir-NN-bolum-fragmani` (или `-N-fragman`);
+  - полные серии: `kanald.com.tr/uzak-sehir/bolumler/uzak-sehir-son-bolum`;
+  - в HTML страницы есть ссылка `kanaldvod.duhnet.tv/.../X.smil/playlist.m3u8`;
+  - подплейлисты лежат рядом со `.smil/`, качать через `ffmpeg -user_agent "Mozilla/5.0" -i <m3u8> -c copy`.
+- На Dailymotion фрагменты появляются только через несколько часов (BeyazPerde ~01:50 ночи).
+- Логотип Kanal D стоит слева вверху, надпись «UZAK ŞEHİR PAZARTESİ 20.00» слева внизу. Обе закрываются в `fragman_intro.py` (зум + размытие угла).
+
+## Формат разборов фрагментов (с 23.11.2026, по просьбе пользователя)
+- Сначала 30–40 с ключевых моментов фрагмента с родным звуком, турецкими субтитрами и красной плашкой «NN. BÖLÜM FRAGMANI» (`videos/build/fragman_intro.py`). Потом обзор голосом ведущего.
+- Фрагмент целиком не показываем: риск заявки Content ID.
+- Никаких 3D-квадратов в начале и между блоками. Крючок должен быть с первого кадра, переходы делаются прямо по кадрам.

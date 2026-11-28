@@ -46,7 +46,7 @@ else:
         parts.append(np.zeros(int(GAP * sr))); t += GAP; b["e"] = t
     vo = np.concatenate(parts + [np.zeros(int(2.5 * 24000))]); sf.write("vo_raw_all.wav", vo, 24000)
     speech = sum(b["ve"] - b["vs"] for b in blocks); nw = sum(len(words(b["text"])) for b in blocks)
-    tempo = min(1.15, max(1.0, 160 / (nw / speech * 60)))
+    tempo = min(1.15, max(0.84, 160 / (nw / speech * 60)))
     subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", "vo_raw_all.wav", "-af", f"atempo={tempo:.4f}", "-ar", "48000", "vo_all.wav"], check=True)
     for b in blocks:
         for k in ("s", "e", "vs", "ve"): b[k] = round(b[k] / tempo, 3)

@@ -1,0 +1,217 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:Anton;src:url(fonts/Anton-Regular.ttf)}
+html,body{margin:0;background:#000}canvas{display:block}</style></head>
+<body><canvas id="c" width="1280" height="720"></canvas><script type="module">
+// Обложка в формуле Your Other Life: герой крупно слева с тёплым светом, холодная панорама катастрофы справа, «10 YEARS».
+// ?v=a — город без света под северным сиянием; ?v=b — DAY 1 / 10 YEARS LATER
+const cv = document.getElementById('c'), c = cv.getContext('2d'), W = 1280, H = 720, INK = '#0d0f17';
+const V = new URLSearchParams(location.search).get('v') || 'a';
+let s = 5; const R = () => (s = (s * 16807) % 2147483647) / 2147483647;
+const layer = (w = W, h = H) => { const k = document.createElement('canvas'); k.width = w; k.height = h; return [k, k.getContext('2d')]; };
+const P = (g, pts, fill, lw = 0, col = INK) => { g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(...p) : g.moveTo(...p)); g.closePath(); if (fill) { g.fillStyle = fill; g.fill(); } if (lw) { g.lineWidth = lw; g.strokeStyle = col; g.lineJoin = 'round'; g.stroke(); } };
+const RR = (g, x, y, w, h, r, fill, lw = 0) => { g.beginPath(); g.roundRect(x, y, w, h, r); if (fill) { g.fillStyle = fill; g.fill(); } if (lw) { g.lineWidth = lw; g.strokeStyle = INK; g.stroke(); } };
+const glow = (g, x, y, r, rgb, a) => { const q = g.createRadialGradient(x, y, 0, x, y, r); q.addColorStop(0, `rgba(${rgb},${a})`); q.addColorStop(1, `rgba(${rgb},0)`);
+  g.save(); g.globalCompositeOperation = 'lighter'; g.fillStyle = q; g.fillRect(x - r, y - r, 2 * r, 2 * r); g.restore(); };
+
+// ---------- небо с северным сиянием
+function sky(g, x0, x1, hz) {
+  const q = g.createLinearGradient(0, 0, 0, hz); q.addColorStop(0, '#040816'); q.addColorStop(0.55, '#0b1d36'); q.addColorStop(1, '#123d4c');
+  g.fillStyle = q; g.fillRect(x0, 0, x1 - x0, hz + 2);
+  for (let i = 0; i < 260; i++) { const x = x0 + R() * (x1 - x0), y = R() * hz * 0.85, r = R() < 0.1 ? 1.6 : 0.8; g.fillStyle = `rgba(255,255,255,${0.3 + R() * 0.6})`; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); }
+  const [a, ag] = layer();
+  ag.globalCompositeOperation = 'lighter';
+  const curtain = (base, amp, ph, hgt, top, bot, w = 2.2) => {
+    for (let x = x0 - 40; x < x1 + 40; x += 1.6) {
+      const y = base + amp * Math.sin(x * 0.0065 + ph) + 18 * Math.sin(x * 0.021 + ph * 2), h = hgt * (0.55 + 0.45 * Math.sin(x * 0.013 + ph * 3)) * (0.7 + 0.3 * R());
+      const q = ag.createLinearGradient(0, y, 0, y - h); q.addColorStop(0, `rgba(${bot},0)`); q.addColorStop(0.08, `rgba(${bot},0.55)`); q.addColorStop(0.45, `rgba(${bot},0.22)`); q.addColorStop(0.8, `rgba(${top},0.14)`); q.addColorStop(1, `rgba(${top},0)`);
+      ag.strokeStyle = q; ag.lineWidth = w; ag.beginPath(); ag.moveTo(x, y); ag.lineTo(x + 10, y - h); ag.stroke();
+    }
+  };
+  curtain(hz - 130, 45, 0.3, 260, '210,70,200', '70,255,160');
+  curtain(hz - 210, 60, 2.1, 230, '255,80,140', '90,255,190', 1.8);
+  curtain(hz - 70, 30, 4.0, 180, '120,90,255', '60,230,150', 1.6);
+  g.save(); g.filter = 'blur(10px)'; g.globalCompositeOperation = 'lighter'; g.drawImage(a, 0, 0); g.restore();
+  g.save(); g.globalCompositeOperation = 'lighter'; g.drawImage(a, 0, 0); g.restore();
+  glow(g, (x0 + x1) / 2, hz - 120, 520, '60,220,150', 0.18);
+}
+// ---------- город без света
+function city(g, x0, x1, hz) {
+  const row = (base, hmin, hmax, col, win, rim, step) => {
+    for (let x = x0 - 20; x < x1;) {
+      const w = 40 + R() * 70, h = hmin + R() * (hmax - hmin), y = base - h;
+      P(g, [[x, base], [x, y], [x + w, y], [x + w, base]], col);
+      if (R() < 0.3) P(g, [[x + w * 0.4, y], [x + w * 0.45, y - 25], [x + w * 0.5, y]], col);
+      g.fillStyle = rim; g.fillRect(x, y, w, 2);
+      for (let wy = y + 10; wy < base - 8; wy += step) for (let wx = x + 6; wx < x + w - 8; wx += step * 0.8) {
+        const r = R(); g.fillStyle = r < 0.012 ? '#ffb45a' : r < 0.5 ? win : 'rgba(0,0,0,0)'; g.fillRect(wx, wy, step * 0.4, step * 0.45);
+        if (r < 0.012) glow(g, wx + 2, wy + 2, 14, '255,170,80', 0.5);
+      }
+      x += w + 2 + R() * 6;
+    }
+  };
+  row(hz + 10, 60, 200, '#0a1626', '#10233a', 'rgba(120,255,200,0.35)', 12);
+  // пожар и дым
+  const fx = x0 + (x1 - x0) * 0.62;
+  for (let i = 0; i < 26; i++) { const t = i / 26, x = fx + Math.sin(t * 5) * 30 + t * 120, y = hz - 20 - t * 300; g.fillStyle = `rgba(40,38,48,${0.32 * (1 - t)})`; g.beginPath(); g.arc(x, y, 30 + t * 60, 0, 7); g.fill(); }
+  glow(g, fx, hz - 10, 120, '255,110,40', 0.55);
+  row(hz + 60, 120, 280, '#08111e', '#0d1c30', 'rgba(110,255,190,0.45)', 15);
+}
+// ---------- парковка у магазина
+function lot(g, x0, x1, y0) {
+  const q = g.createLinearGradient(0, y0, 0, H); q.addColorStop(0, '#0c1824'); q.addColorStop(1, '#0a121b'); g.fillStyle = q; g.fillRect(x0, y0, x1 - x0, H - y0);
+  const rq = g.createLinearGradient(0, y0, 0, H); rq.addColorStop(0, 'rgba(70,230,160,0.16)'); rq.addColorStop(1, 'rgba(70,230,160,0)'); g.fillStyle = rq; g.fillRect(x0, y0, x1 - x0, H - y0);
+  g.strokeStyle = 'rgba(200,230,220,0.18)'; g.lineWidth = 3; for (let i = 0; i < 12; i++) { const x = x0 + 40 + i * 70; g.beginPath(); g.moveTo(x, y0 + 30); g.lineTo(x - 60 + i * 8, H); g.stroke(); }
+  const car = (x, y, w, col, door) => { g.save(); g.translate(x, y);
+    P(g, [[-w / 2, 0], [-w / 2, -w * 0.2], [-w * 0.3, -w * 0.25], [-w * 0.15, -w * 0.42], [w * 0.2, -w * 0.42], [w * 0.34, -w * 0.25], [w / 2, -w * 0.2], [w / 2, 0]], col, 3);
+    P(g, [[-w * 0.12, -w * 0.39], [w * 0.17, -w * 0.39], [w * 0.28, -w * 0.26], [-w * 0.24, -w * 0.26]], '#1b3346');
+    g.strokeStyle = 'rgba(120,255,200,0.55)'; g.lineWidth = 2; g.beginPath(); g.moveTo(-w * 0.15, -w * 0.42); g.lineTo(w * 0.2, -w * 0.42); g.stroke();
+    if (door) P(g, [[w * 0.05, -w * 0.25], [w * 0.05, -w * 0.02], [w * 0.32, w * 0.06], [w * 0.36, -w * 0.2]], col, 3);
+    g.fillStyle = INK; for (const k of [-0.3, 0.3]) { g.beginPath(); g.arc(w * k, 0, w * 0.08, 0, 7); g.fill(); }
+    g.restore(); };
+  car(x0 + 120, y0 + 70, 150, '#1d2a38', false); car(x0 + 420, y0 + 95, 180, '#3a1f24', true); car(x0 + 680, y0 + 140, 230, '#1a2632', false);
+  // мёртвые фонари
+  for (const [x, h] of [[x0 + 260, 220], [x0 + 560, 280]]) { g.fillStyle = '#05080e'; g.fillRect(x - 4, y0 + 110 - h, 8, h); g.fillRect(x - 40, y0 + 110 - h, 44, 8); g.strokeStyle = 'rgba(110,255,190,0.5)'; g.lineWidth = 1.5; g.strokeRect(x - 4, y0 + 110 - h, 8, h); }
+}
+// ---------- герой по пояс
+function hero(g, cx, cy, r, { beard = false, ragged = false } = {}) {
+  const [L, l] = layer(); l.lineCap = l.lineJoin = 'round';
+  const lw = r * 0.05;
+  // рюкзак со скаткой
+  RR(l, cx - r * 1.95, cy + r * 0.9, r * 1.2, r * 1.7, r * 0.25, '#5b4a2e', lw);
+  RR(l, cx - r * 1.85, cy + r * 1.3, r * 0.5, r * 0.6, r * 0.1, '#6c5836', lw * 0.8);
+  RR(l, cx - r * 2.1, cy + r * 0.55, r * 1.35, r * 0.5, r * 0.25, '#7b6a3e', lw); for (let i = 1; i < 4; i++) { l.beginPath(); l.ellipse(cx - r * 2.1 + i * r * 0.34, cy + r * 0.8, r * 0.06, r * 0.24, 0, 0, 7); l.strokeStyle = '#4c3f22'; l.lineWidth = lw * 0.6; l.stroke(); }
+  RR(l, cx - r * 2.18, cy + r * 1.1, r * 0.3, r * 0.75, r * 0.12, '#b9c0c6', lw);   // фляга
+  // торс-худи
+  const hood = ragged ? '#7f8379' : '#8e939b', hoodSh = ragged ? '#5f6259' : '#70757d';
+  P(l, [[cx - r * 1.55, H + 10], [cx - r * 1.5, cy + r * 1.55], [cx - r * 1.1, cy + r * 1.05], [cx + r * 1.1, cy + r * 1.05], [cx + r * 1.55, cy + r * 1.55], [cx + r * 1.6, H + 10]], hood, lw);
+  P(l, [[cx - r * 0.75, cy + r * 1.0], [cx + r * 0.75, cy + r * 1.0], [cx + r * 0.6, cy + r * 1.45], [cx - r * 0.6, cy + r * 1.45]], hoodSh, lw);   // капюшон за шеей
+  if (ragged) { for (const [x, y] of [[-0.9, 2.0], [0.7, 1.8], [1.1, 2.3]]) RR(l, cx + x * r, cy + y * r, r * 0.35, r * 0.28, 4, '#9b8a6a', lw * 0.6); }
+  l.save(); l.globalCompositeOperation = 'source-atop';
+  l.fillStyle = 'rgba(20,25,40,0.35)'; l.beginPath(); l.ellipse(cx, cy + r * 1.15, r * 0.95, r * 0.32, 0, 0, 7); l.fill();
+  const dk = l.createLinearGradient(0, cy + r * 1.2, 0, H); dk.addColorStop(0, 'rgba(10,15,30,0)'); dk.addColorStop(1, 'rgba(10,15,30,0.45)'); l.fillStyle = dk; l.fillRect(cx - r * 2, cy + r * 1.2, r * 4, H);
+  l.restore();
+  l.strokeStyle = 'rgba(20,25,40,0.45)'; l.lineWidth = lw * 0.7; for (const [a, b, c2, d] of [[-0.9, 1.7, -0.6, 2.4], [0.95, 1.65, 0.7, 2.3], [-0.2, 1.9, -0.3, 2.3]]) { l.beginPath(); l.moveTo(cx + a * r, cy + b * r); l.quadraticCurveTo(cx + (a + c2) / 2 * r + 10, cy + (b + d) / 2 * r, cx + c2 * r, cy + d * r); l.stroke(); }
+  // лямки рюкзака
+  for (const s of [-1, 1]) P(l, [[cx + s * r * 0.95, cy + r * 1.1], [cx + s * r * 1.25, cy + r * 1.15], [cx + s * r * 1.05, H + 10], [cx + s * r * 0.72, H + 10]], '#4a3c24', lw * 0.8);
+  // шнурки капюшона
+  for (const s of [-1, 1]) { l.strokeStyle = INK; l.lineWidth = lw * 0.7; l.beginPath(); l.moveTo(cx + s * r * 0.3, cy + r * 1.2); l.lineTo(cx + s * r * 0.33, cy + r * 1.75); l.stroke(); }
+  // голова
+  l.save(); l.translate(cx, cy);
+  l.beginPath(); l.arc(0, 0, r, 0, 7); l.fillStyle = '#eceeea'; l.fill(); l.lineWidth = lw; l.strokeStyle = INK; l.stroke();
+  if (beard) { l.beginPath(); l.moveTo(-r * 0.9, r * 0.05); l.bezierCurveTo(-r * 0.95, r * 1.25, r * 0.95, r * 1.25, r * 0.9, r * 0.05); l.quadraticCurveTo(r * 0.5, r * 0.5, 0, r * 0.45); l.quadraticCurveTo(-r * 0.5, r * 0.5, -r * 0.9, r * 0.05); l.fillStyle = '#6f5a44'; l.fill(); l.stroke();
+    for (let i = 0; i < 14; i++) { const a = -0.3 + i * 0.27; l.beginPath(); l.moveTo(Math.cos(a + 1.2) * r * 0.75, Math.sin(a + 1.2) * r * 0.75); l.lineTo(Math.cos(a + 1.2) * r * 0.95, Math.sin(a + 1.2) * r * 0.95); l.strokeStyle = '#4e3f30'; l.lineWidth = lw * 0.5; l.stroke(); } l.strokeStyle = INK; }
+  // шапка
+  l.beginPath(); l.moveTo(-r * 1.04, -r * 0.22); l.bezierCurveTo(-r * 1.08, -r * 1.55, r * 1.08, -r * 1.55, r * 1.04, -r * 0.22); l.closePath(); l.fillStyle = ragged ? '#c9931c' : '#f2b21b'; l.fill(); l.lineWidth = lw; l.stroke();
+  for (let i = -4; i <= 4; i++) { l.beginPath(); l.moveTo(i * r * 0.2, -r * 0.45); l.lineTo(i * r * 0.16, -r * 1.02 + Math.abs(i) * r * 0.05); l.strokeStyle = '#cf9010'; l.lineWidth = lw * 0.55; l.stroke(); }
+  RR(l, -r * 1.12, -r * 0.55, r * 2.24, r * 0.4, r * 0.16, ragged ? '#a87a12' : '#d9970f', lw);
+  if (ragged) { P(l, [[r * 0.4, -r * 1.05], [r * 0.6, -r * 0.92], [r * 0.45, -r * 0.85]], '#eceeea', lw * 0.5); }
+  for (const s of [-1, 1]) P(l, [[s * r * 0.98, -r * 0.2], [s * r * 1.1, r * 0.22], [s * r * 0.86, r * 0.0]], beard ? '#6f5a44' : '#6b4426', lw * 0.8);
+  // лицо: тревога
+  l.lineWidth = lw * 1.1; l.strokeStyle = INK;
+  for (const s of [-1, 1]) { l.beginPath(); l.moveTo(s * r * 0.62, -r * 0.08); l.quadraticCurveTo(s * r * 0.4, -r * 0.22, s * r * 0.14, -r * 0.3); l.stroke(); }
+  for (const s of [-1, 1]) { l.fillStyle = INK; l.beginPath(); l.ellipse(s * r * 0.33, r * 0.12, r * 0.12, r * 0.16, 0, 0, 7); l.fill();
+    l.fillStyle = '#fff'; l.beginPath(); l.arc(s * r * 0.33 - r * 0.04, r * 0.06, r * 0.05, 0, 7); l.fill(); }
+  if (!beard) { l.beginPath(); l.moveTo(-r * 0.2, r * 0.6); l.quadraticCurveTo(0, r * 0.36, r * 0.2, r * 0.6); l.quadraticCurveTo(0, r * 0.52, -r * 0.2, r * 0.6); l.fillStyle = '#2a1416'; l.fill(); l.lineWidth = lw * 0.9; l.stroke(); }
+  else { l.beginPath(); l.moveTo(-r * 0.2, r * 0.55); l.quadraticCurveTo(0, r * 0.42, r * 0.2, r * 0.55); l.lineWidth = lw; l.stroke(); }
+  // капля пота
+  l.beginPath(); l.moveTo(r * 0.78, -r * 0.42); l.quadraticCurveTo(r * 0.92, -r * 0.2, r * 0.85, -r * 0.12); l.arc(r * 0.78, -r * 0.14, r * 0.075, 0.2, Math.PI - 0.6); l.closePath(); l.fillStyle = '#6cc7ff'; l.fill(); l.lineWidth = lw * 0.6; l.stroke();
+  l.restore();
+  // руки на перилах
+  for (const [x0, y0, x1, y1] of [[cx - r * 1.45, cy + r * 2.35, cx + r * 0.05, cy + r * 2.5], [cx + r * 1.5, cy + r * 2.3, cx + r * 0.55, cy + r * 2.42]]) {
+    l.lineWidth = r * 0.5; l.strokeStyle = INK; l.beginPath(); l.moveTo(x0, y0); l.lineTo(x1, y1); l.stroke();
+    l.lineWidth = r * 0.5 - lw * 2; l.strokeStyle = hood; l.stroke();
+    l.beginPath(); l.ellipse(x1 + r * 0.12, y1 + r * 0.02, r * 0.3, r * 0.22, 0, 0, 7); l.fillStyle = ragged ? '#3a3a36' : '#f4f4f1'; l.fill(); l.lineWidth = lw; l.strokeStyle = INK; l.stroke();
+  }
+  return L;
+}
+// свет на герое: тёплый слева (фонарь), зелёный контровой справа (сияние)
+function lightHero(L, warmX, warmY) {
+  const l = L.getContext('2d'); l.save(); l.globalCompositeOperation = 'source-atop';
+  const w = l.createRadialGradient(warmX, warmY, 0, warmX, warmY, 520); w.addColorStop(0, 'rgba(255,150,60,0.5)'); w.addColorStop(1, 'rgba(255,150,60,0)'); l.fillStyle = w; l.fillRect(0, 0, W, H);
+  const d = l.createLinearGradient(0, 0, W * 0.5, 0); d.addColorStop(0, 'rgba(10,20,40,0.0)'); d.addColorStop(1, 'rgba(10,30,50,0.35)'); l.fillStyle = d; l.fillRect(0, 0, W, H);
+  l.restore();
+  const [Rk, rk] = layer(); rk.drawImage(L, 0, 0); rk.globalCompositeOperation = 'source-in'; rk.fillStyle = 'rgba(120,255,200,0.95)'; rk.fillRect(0, 0, W, H);
+  rk.globalCompositeOperation = 'destination-out'; rk.drawImage(L, -9, 2);
+  return Rk;
+}
+function lantern(g, x, y, s) {
+  glow(g, x, y - 40 * s, 380 * s, '255,140,40', 0.7); glow(g, x, y - 40 * s, 120 * s, '255,210,140', 0.9);
+  g.lineWidth = 4 * s; g.strokeStyle = INK; g.beginPath(); g.arc(x, y - 92 * s, 18 * s, Math.PI, 0); g.stroke();
+  RR(g, x - 26 * s, y - 88 * s, 52 * s, 14 * s, 4, '#2c2620', 3 * s);
+  RR(g, x - 22 * s, y - 74 * s, 44 * s, 62 * s, 10 * s, 'rgba(255,214,140,0.95)', 3 * s);
+  g.fillStyle = '#fff3c4'; g.beginPath(); g.ellipse(x, y - 42 * s, 7 * s, 14 * s, 0, 0, 7); g.fill();
+  RR(g, x - 28 * s, y - 14 * s, 56 * s, 14 * s, 4, '#2c2620', 3 * s);
+}
+function rail(g, y, x1) {
+  const q = g.createLinearGradient(0, y, 0, y + 40); q.addColorStop(0, '#8a4b2a'); q.addColorStop(1, '#4e2a1a');
+  RR(g, -20, y, x1 + 20, 34, 8, q, 5);
+  for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(${150 + R() * 60},${70 + R() * 30},30,0.6)`; g.beginPath(); g.arc(R() * x1, y + 6 + R() * 22, 2 + R() * 4, 0, 7); g.fill(); }
+  for (let x = 30; x < x1; x += 90) { RR(g, x, y + 30, 16, H - y, 3, '#5a301e', 4); }
+  g.strokeStyle = 'rgba(255,190,120,0.5)'; g.lineWidth = 3; g.beginPath(); g.moveTo(0, y + 4); g.lineTo(x1, y + 4); g.stroke();
+}
+function sign(g) {   // погасшая вывеска магазина за героем
+  g.save(); g.font = '120px Anton'; g.textBaseline = 'alphabetic';
+  g.fillStyle = '#14202c'; g.strokeStyle = INK; g.lineWidth = 6; g.strokeText('MARKET', -10, 250); g.fillText('MARKET', -10, 250);
+  g.strokeStyle = 'rgba(110,255,190,0.35)'; g.lineWidth = 2; g.strokeText('MARKET', -10, 250);
+  g.fillStyle = '#0b121b'; g.fillRect(-10, 250, 420, 14); for (const x of [60, 200, 330]) g.fillRect(x, 264, 10, 170);
+  g.restore();
+}
+function title(g, text, x, y, size, col = '#ffffff', skew = -0.12, align = 'right') {
+  g.save(); g.translate(x, y); g.transform(1, 0, skew, 1, 0, 0); g.font = `${size}px Anton`; g.textAlign = align; g.lineJoin = 'round';
+  g.shadowColor = 'rgba(0,0,0,0.8)'; g.shadowBlur = 24; g.shadowOffsetY = 8; g.lineWidth = size * 0.16; g.strokeStyle = '#000'; g.strokeText(text, 0, 0);
+  g.shadowColor = 'transparent'; g.fillStyle = col; g.fillText(text, 0, 0);
+  // потёртости
+  const [T, t] = layer(); t.font = g.font; t.textAlign = align; t.fillStyle = '#000'; t.translate(W / 2, H / 2);
+  g.restore();
+}
+function finish(g) {
+  const [F, f] = layer(); f.filter = 'contrast(1.15) saturate(1.3)'; f.drawImage(g.canvas, 0, 0); g.drawImage(F, 0, 0);
+  const v = g.createRadialGradient(W * 0.55, H * 0.45, H * 0.3, W * 0.55, H * 0.5, W * 0.75); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.55)'); g.fillStyle = v; g.fillRect(0, 0, W, H);
+  const d = g.getImageData(0, 0, W, H), p = d.data; for (let i = 0; i < p.length; i += 4) { const n = (R() - 0.5) * 12; p[i] += n; p[i + 1] += n; p[i + 2] += n; } g.putImageData(d, 0, 0);
+}
+
+await document.fonts.load('100px Anton');
+if (V === 'a') {
+  const HZ = 470;
+  sky(c, 0, W, HZ); city(c, 300, W, HZ); lot(c, 420, W, HZ + 60);
+  sign(c);
+  lantern(c, 92, 600, 1.35);
+  const L = hero(c, 360, 300, 118), rim = lightHero(L, 60, 520);
+  c.drawImage(L, 0, 0); c.save(); c.globalAlpha = 0.85; c.drawImage(rim, 0, 0); c.filter = 'blur(5px)'; c.globalCompositeOperation = 'lighter'; c.globalAlpha = 0.6; c.drawImage(rim, 0, 0); c.restore();
+  rail(c, 598, 760);
+  title(c, '10 YEARS', 1240, 175, 170);
+  finish(c);
+} else {
+  // ---- DAY 1 | 10 YEARS LATER
+  const half = W / 2;
+  // слева: первая ночь, лампы магазина искрят, за окном сияние
+  c.save(); c.beginPath(); c.rect(0, 0, half, H); c.clip();
+  sky(c, 0, half, 420); city(c, 0, half, 420);
+  c.fillStyle = '#d8dde2'; c.fillRect(0, 440, half, H);
+  for (let x = 20; x < half; x += 130) { RR(c, x, 450, 110, 240, 6, '#dfe3e7', 4); for (let y = 470; y < 680; y += 52) { RR(c, x + 6, y, 98, 8, 2, '#a7aeb6', 2); for (let k = 0; k < 4; k++) RR(c, x + 10 + k * 24, y - 34, 18, 34, 4, ['#d8382c', '#3f7fc4', '#e9a23b', '#5aa05a'][(k + x) % 4], 2); } }
+  for (const [x, y] of [[120, 60], [470, 90]]) { glow(c, x, y, 140, '255,230,150', 0.7); for (let i = 0; i < 14; i++) { const a = R() * 6.28, d = 20 + R() * 70; c.strokeStyle = '#fff2a8'; c.lineWidth = 3; c.beginPath(); c.moveTo(x, y); c.lineTo(x + Math.cos(a) * d, y + Math.sin(a) * d); c.stroke(); } }
+  const L1 = hero(c, 330, 330, 120); lightHero(L1, 120, 60); c.drawImage(L1, 0, 0);
+  c.restore();
+  // справа: 10 лет спустя — магазин зарос, крыша в дырах, сияние через пролом
+  c.save(); c.beginPath(); c.rect(half, 0, half, H); c.clip();
+  sky(c, half, W, 470); city(c, half, W, 470);
+  c.fillStyle = '#2a2f2a'; c.fillRect(half, 470, half, H);
+  for (let i = 0; i < 90; i++) { const x = half + R() * half, y = 470 + R() * 250; c.fillStyle = ['#2f5a2a', '#3d6e2e', '#25451f'][i % 3]; c.beginPath(); c.ellipse(x, y, 30 + R() * 40, 14 + R() * 20, 0, 0, 7); c.fill(); }
+  for (let x = half + 10; x < W; x += 130) { P(c, [[x, H], [x + 10, 480], [x + 115, 470], [x + 110, H]], '#3b3f3a', 4); for (let k = 0; k < 6; k++) { c.strokeStyle = '#4f7d36'; c.lineWidth = 4; c.beginPath(); c.moveTo(x + R() * 110, 480); c.quadraticCurveTo(x + R() * 110, 560, x + R() * 110, 620 + R() * 80); c.stroke(); } }
+  const L2 = hero(c, half + 330, 330, 120, { beard: true, ragged: true }); lightHero(L2, half - 200, 900); c.drawImage(L2, 0, 0);
+  lantern(c, half + 80, 690, 1.0);
+  c.restore();
+  c.fillStyle = '#fff'; c.fillRect(half - 4, 0, 8, H);
+  // таблички
+  const tag = (x, y, parts) => { c.save(); c.translate(x, y); c.transform(1, 0, -0.12, 1, 0, 0); c.font = '82px Anton'; const w = parts.reduce((a, [t]) => a + c.measureText(t).width, 0) + 50;
+    c.fillStyle = '#000'; c.beginPath(); c.moveTo(-w / 2 - 10, -78); c.lineTo(w / 2 + 14, -84); c.lineTo(w / 2 + 6, 16); c.lineTo(-w / 2 - 4, 22); c.closePath(); c.fill();
+    let px = -w / 2 + 25; for (const [t, col] of parts) { c.fillStyle = col; c.fillText(t, px, 0); px += c.measureText(t).width; } c.restore(); };
+  tag(300, 120, [['DAY ', '#fff'], ['1', '#ff3b2f']]); tag(950, 120, [['10 YEARS ', '#fff'], ['LATER', '#ffd21f']]);
+  // красная стрелка
+  c.save(); c.lineCap = 'round'; c.strokeStyle = '#000'; c.lineWidth = 34; c.beginPath(); c.moveTo(500, 620); c.quadraticCurveTo(640, 540, 790, 610); c.stroke();
+  c.strokeStyle = '#e8261c'; c.lineWidth = 22; c.stroke();
+  P(c, [[825, 628], [765, 568], [752, 640]], '#e8261c', 6, '#000'); c.restore();
+  finish(c);
+}
+window.READY = true;
+</script></body></html>

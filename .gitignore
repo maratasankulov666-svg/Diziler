@@ -14,3 +14,6 @@ gen.log
 gen2.log
 survival/videos/test04_anim/chk/
 survival/videos/test04_anim/*.wav
+survival/refs/comp/*.mp4
+survival/refs/comp/*.cuts*
+survival/refs/comp/transcribe.log

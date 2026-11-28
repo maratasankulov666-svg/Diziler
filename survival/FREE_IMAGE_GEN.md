@@ -1,6 +1,16 @@
 # Бесплатная генерация для стиля A (проверено 28.11.2026)
 
-## Рабочая схема: всё локально, без аккаунтов и ключей
+## НОВОЕ (28.11.2026): Z-Image-Turbo — лучший бесплатный вариант
+- [leejet/stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp) (сборка в `/opt/sd/src`) и модель Z-Image-Turbo (Apache 2.0).
+- Файлы в `/opt/sd/models`:
+  - `zit_q4k.gguf` из leejet/Z-Image-Turbo-GGUF;
+  - `qwen3_4b_q8.gguf` из unsloth/Qwen3-4B-Instruct-2507-GGUF;
+  - `ae.safetensors` из Comfy-Org/z_image_turbo.
+- Запуск: `styles/ai/gen.sh имя seed "prompt"`, 8 шагов, cfg 1.0, 1024×576.
+- **~7,5 мин на кадр на CPU** (4 потока). Качество как у образца: мультяшный герой рисуется вместе с фоном.
+- Пример: `styles/ai/A_webcomic.png`.
+
+## Старая схема: всё локально, без аккаунтов и ключей
 1. **Фон** рисует `engine/background.py`: SDXL-Turbo через [huggingface/diffusers](https://github.com/huggingface/diffusers), на CPU.
    - Кадр 1024×576 за ~25 с, 30-минутное видео (60–80 фонов) примерно за 30 минут.
    - Работает здесь, в облачной сессии. Видеокарта не нужна.

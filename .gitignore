@@ -3,3 +3,6 @@ segs/
 !samples/*.wav
 __pycache__/
 *.mp4
+
+# survival project: внешние репозитории стилей (качаются tools/setup.sh)
+survival/vendor/

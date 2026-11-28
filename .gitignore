@@ -12,3 +12,5 @@ survival/omni/
 survival/tests/tts_compare/*.wav
 gen.log
 gen2.log
+survival/videos/test04_anim/chk/
+survival/videos/test04_anim/*.wav

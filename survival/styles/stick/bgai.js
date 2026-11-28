@@ -1,6 +1,7 @@
 // Фоны кодом «как у генерации» (Z-Image): плоская заливка + 2 тона светотени, толстый тёмно-синий контур,
 // ночная сине-оранжевая палитра, мягкое свечение ламп, виньетка и лёгкое зерно. Без нейросетей.
 const INK = '#1c2133';
+export const AISLE_JARS = [];   // экранные прямоугольники банок (для анимации: какую банку уронить)
 let seed = 7; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
 const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 const mix = (a, b, t) => { const A = hex(a), B = hex(b); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
@@ -22,7 +23,7 @@ function finish(c, W, H, vig = 0.45) {
 
 // ---------- 1. Проход с банками: тёмный потолок с балками, лампы по центру, оранжевый свет в конце
 export function drawAisle(c, W = 1280, H = 720) {
-  seed = 11;
+  seed = 11; AISLE_JARS.length = 0;
   const vx = W / 2, vy = H * 0.5, f = 600, pr = (x, y, z) => [vx + f * x / z, vy - f * y / z];
   const Y0 = -1.45, Y1 = 1.9, XL = -1.55, XR = 1.55, far = 20, D = 0.75;
   // фон и дальняя стена
@@ -82,6 +83,7 @@ export function drawAisle(c, W = 1280, H = 720) {
         const xa = pr(xj, 0, z)[0], xb = pr(xj, 0, z + jw)[0], x0 = Math.min(xa, xb), w = Math.abs(xa - xb);
         const top = pr(xj, yb + h, zm)[1], bot = pr(xj, yb, zm)[1], hh = bot - top;
         if (w < 0.8) return;
+        AISLE_JARS.push({ side, li, z, x: x0, y: top, w, h: hh, pale });
         const body = pale ? '#efe6d2' : '#d8382c', dark = pale ? '#cbbfa6' : '#a8261f', lab = pale ? '#e0d2b6' : '#f3ead8';
         rr(c, x0, top + hh * 0.08, w, hh * 0.92, Math.min(w, hh) * 0.22, body, lw);
         // тень на дальней от лампы стороне

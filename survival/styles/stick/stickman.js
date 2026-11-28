@@ -15,7 +15,7 @@ export function drawStick(c, X, Y, R, o = {}) {
   const lw = Math.max(2, R * 0.085), limbW = Math.max(2.5, R * 0.1);
   c.save(); c.lineCap = c.lineJoin = 'round';
   // тень на полу
-  c.fillStyle = 'rgba(0,0,0,0.28)'; c.beginPath(); c.ellipse(X, Y + R * 0.05, R * 1.15, R * 0.2, 0, 0, 7); c.fill();
+  c.fillStyle = 'rgba(0,0,0,0.28)'; c.beginPath(); const gd = o.groundDy || 0, sh = Math.max(0.35, 1 - gd / (R * 3)); c.ellipse(X, Y + gd + R * 0.05, R * 1.15 * sh, R * 0.2 * sh, 0, 0, 7); c.fill();
   c.translate(X, Y); c.rotate(o.lean || 0);
   // размеры тела (y вверх отрицательный)
   const hipY = -R * 2.25, shY = -R * 3.75, headY = -R * 4.95, legL = R * 1.12;
@@ -64,10 +64,15 @@ export function drawStick(c, X, Y, R, o = {}) {
     c.beginPath(); c.moveTo(-R * 0.98, -R * 0.1); c.bezierCurveTo(-R * 1.1, -R * 1.25, R * 1.1, -R * 1.25, R * 0.98, -R * 0.1);
     c.quadraticCurveTo(R * 0.4, -R * 0.62, -R * 0.2, -R * 0.55); c.quadraticCurveTo(-R * 0.7, -R * 0.5, -R * 0.98, -R * 0.1); c.closePath(); fillStroke(O.hair);
   }
+  if (o.back) {
+    if (O.hat) { c.beginPath(); c.moveTo(-R * 1.0, -R * 0.1); c.bezierCurveTo(-R * 1.0, R * 0.5, R * 1.0, R * 0.5, R * 1.0, -R * 0.1); c.closePath(); fillStroke(O.hair); }
+    c.restore(); c.restore(); return;
+  }
   // лицо
   const mood = o.mood || 'neutral', ey = R * 0.05 + ly, er = R * (mood === 'scared' ? 0.11 : 0.075);
   for (const s of [-1, 1]) {
-    if (mood === 'tired') seg([[s * R * 0.34 + lx - R * 0.1, ey], [s * R * 0.34 + lx + R * 0.1, ey]], lw * 0.8);
+    if (o.blink > 0.5) seg([[s * R * 0.32 + lx - R * 0.09, ey], [s * R * 0.32 + lx + R * 0.09, ey]], lw * 0.8);
+    else if (mood === 'tired') seg([[s * R * 0.34 + lx - R * 0.1, ey], [s * R * 0.34 + lx + R * 0.1, ey]], lw * 0.8);
     else { c.fillStyle = INK; c.beginPath(); c.ellipse(s * R * 0.32 + lx, ey, er, er * 1.15, 0, 0, 7); c.fill(); }
   }
   const [up, dn] = { neutral: [0, 0], worried: [0.12, 0.04], scared: [0.2, 0], determined: [-0.1, -0.06], happy: [0.05, 0], tired: [0, 0.06] }[mood] || [0, 0];

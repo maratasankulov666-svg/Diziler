@@ -3,10 +3,12 @@
 // Кадры стиля «стикмен на подробном фоне». ?shot=имя
 import { drawStick, propBox } from './stickman.js';
 import { drawAisle, drawEntrance, drawParking } from './bgcode.js';
+import * as AI from './bgai.js';
 const c = document.getElementById('c').getContext('2d');
 const shot = new URLSearchParams(location.search).get('shot') || 'aisle';
 const img = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = src; });
 async function bg(name) {
+  if (name === 'k_aisle') return AI.drawAisle(c); if (name === 'k_entrance') return AI.drawEntrance(c); if (name === 'k_parking') return AI.drawParking(c);
   if (name === 'aisle') return drawAisle(c); if (name === 'entrance') return drawEntrance(c); if (name === 'parking') return drawParking(c);
   const i = await img('bg/' + name + '.png'); if (i) c.drawImage(i, 0, 0, 1280, 720); else { c.fillStyle = '#333'; c.fillRect(0, 0, 1280, 720); }
 }
@@ -19,6 +21,10 @@ const S = {
   ai_aisle:   async () => { await bg('bg_aisle'); drawStick(c, 470, 690, 64, { mood: 'determined', armL: [-2.3, 0.2], armR: [0.35, 1.0], propR: propBox, look: [-5, -3] }); },
   ai_entrance:async () => { await bg('bg_entrance'); drawStick(c, 640, 700, 75, { outfit: 'worker', mood: 'worried', armL: [0.25, 0.1], armR: [-0.25, -0.1], legL: [0.12, -0.25], legR: [-0.12, 0.25] }); },
   ai_parking: async () => { await bg('bg_parking'); drawStick(c, 470, 690, 52, { outfit: 'worker', mood: 'worried', armL: [0.5, 0.4], armR: [-0.6, -0.3] });
+    drawStick(c, 900, 720, 62, { mood: 'worried', armL: [0.3, 0.15], armR: [-0.3, -0.15], look: [-6, 0] }); drawStick(c, 260, 560, 30, { outfit: 'green', mood: 'worried' }); drawStick(c, 1090, 560, 30, { outfit: 'green', mood: 'tired' }); },
+  k_aisle:    async () => { await bg('k_aisle'); drawStick(c, 470, 690, 64, { mood: 'determined', armL: [-2.3, 0.2], armR: [0.35, 1.0], propR: propBox, look: [-5, -3] }); },
+  k_entrance: async () => { await bg('k_entrance'); drawStick(c, 640, 700, 75, { outfit: 'worker', mood: 'worried', armL: [0.25, 0.1], armR: [-0.25, -0.1], legL: [0.12, -0.25], legR: [-0.12, 0.25] }); },
+  k_parking:  async () => { await bg('k_parking'); drawStick(c, 470, 690, 52, { outfit: 'worker', mood: 'worried', armL: [0.5, 0.4], armR: [-0.6, -0.3] });
     drawStick(c, 900, 720, 62, { mood: 'worried', armL: [0.3, 0.15], armR: [-0.3, -0.15], look: [-6, 0] }); drawStick(c, 260, 560, 30, { outfit: 'green', mood: 'worried' }); drawStick(c, 1090, 560, 30, { outfit: 'green', mood: 'tired' }); },
 };
 await S[shot]();

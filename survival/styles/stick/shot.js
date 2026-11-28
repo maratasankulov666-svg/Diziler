@@ -2,7 +2,7 @@
 const { chromium } = require('playwright');
 (async () => {
   const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
-  const p = await b.newPage({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
+  const p = await b.newPage({ viewport: { width: +(process.env.W||1280), height: +(process.env.H||720) }, deviceScaleFactor: 1 });
   p.on('console', m => console.log('page:', m.text())); p.on('pageerror', e => console.log('ERR', e.message));
   const a = process.argv.slice(2);
   for (let i = 0; i < a.length; i += 2) {

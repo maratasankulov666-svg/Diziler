@@ -1,0 +1,16 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0}canvas{display:block}</style></head>
+<body><canvas id="c" width="2000" height="1120"></canvas><script type="module">
+// Лист персонажа кодом — сравнение с эталоном refs/hero/hero_sheet_nanobanana.jpg
+import { drawHero } from './hero.js';
+const c = document.getElementById('c').getContext('2d');
+c.fillStyle = '#c4c4c4'; c.fillRect(0, 0, 2000, 1120);
+const R = 95, Y = 690;
+drawHero(c, 230, Y, R, { mood: 'neutral' });
+drawHero(c, 620, Y, R, { view: 'side', facing: 1, mood: 'worried', look: [0, 0] });
+drawHero(c, 1010, Y, R, { view: 'side', facing: -1, mood: 'determined' });
+drawHero(c, 1400, Y, R, { view: 'back' });
+drawHero(c, 1780, Y, R, { mood: 'happy', armR: [2.55, -0.5] });
+['worried', 'scared', 'determined', 'tired', 'relieved', 'happy'].forEach((m, i) => {
+  c.save(); c.beginPath(); c.rect(i * 333, 760, 333, 360); c.clip(); drawHero(c, 166 + i * 333, 1120 + 4.95 * 110 - 230, 110, { mood: m }); c.restore(); });
+window.READY = true;
+</script></body></html>

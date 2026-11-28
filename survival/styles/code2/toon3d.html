@@ -1,0 +1,114 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js"}}</script>
+</head><body>
+<script type="module">
+// Вариант «3D-мультик»: three.js + ступенчатый (cel) свет + чернильный контур постобработкой.
+// Режимы через ?look=night|day|sketch
+import * as THREE from 'three';
+import { makeHero } from './hero.js';
+const look = new URLSearchParams(location.search).get('look') || 'night';
+const paint = new URLSearchParams(location.search).get('post') === 'paint';
+const W = 1280, H = 720;
+const r = new THREE.WebGLRenderer({ antialias: false, preserveDrawingBuffer: true });
+r.setPixelRatio(window.devicePixelRatio); r.setSize(W, H); document.body.appendChild(r.domElement);
+const PW = W * window.devicePixelRatio, PH = H * window.devicePixelRatio;
+
+// ступени света (3 тона) — это и даёт «нарисованный» вид
+const grad = new THREE.DataTexture(new Uint8Array([90, 90, 90, 255, 170, 170, 170, 255, 255, 255, 255, 255]), 3, 1);
+grad.minFilter = grad.magFilter = THREE.NearestFilter; grad.needsUpdate = true;
+const toon = (c, emissive = 0) => new THREE.MeshToonMaterial({ color: c, gradientMap: grad, emissive: emissive || 0x000000 });
+
+const P = {
+  night: { sky: 0x0b1530, fog: 0x14204a, hemi: [0x4a6bc4, 0x10142a, 1.4], sun: [0x8fb0ff, 1.0], shop: 0xffc46b, floor: 0x26324f, wall: 0x2f3c63, slab: 0x3a4870, metal: 0x1a2138, pill: 0x34416a },
+  day: { sky: 0xbfe3ff, fog: 0xd9ecff, hemi: [0xffffff, 0x8a7a66, 1.6], sun: [0xfff2dc, 2.2], shop: 0xfff0cc, floor: 0xd9cfc0, wall: 0xe9e2d6, slab: 0xf3eee5, metal: 0x6f7682, pill: 0xd8d0c3 },
+}[look === 'day' ? 'day' : 'night'];
+
+const scene = new THREE.Scene(); scene.background = new THREE.Color(P.sky); scene.fog = new THREE.Fog(P.fog, 14, 46);
+const cam = new THREE.PerspectiveCamera(42, W / H, 0.1, 100); cam.position.set(0.8, 2.2, 13.5); cam.lookAt(-0.4, 3.4, 0);
+scene.add(new THREE.HemisphereLight(...P.hemi));
+const sun = new THREE.DirectionalLight(...P.sun); sun.position.set(-6, 14, 8); scene.add(sun);
+const box = (w, h, d, c, x, y, z, em) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), toon(c, em)); o.position.set(x, y, z); scene.add(o); return o; };
+
+// пол с плиткой
+box(60, 0.2, 40, P.floor, 0, -0.1, 0);
+for (let i = -14; i <= 14; i++) box(0.03, 0.01, 40, P.metal, i * 1.6, 0.005, 0);
+// три этажа магазинов
+const shopRow = (y, z) => {
+  box(40, 4, 0.4, P.wall, 0, y + 2, z - 0.6);
+  for (let i = -5; i <= 5; i++) {
+    const x = i * 3.4;
+    box(2.8, 2.4, 0.1, P.shop, x, y + 1.3, z - 0.35, P.shop).material.emissiveIntensity = look === 'day' ? 0.25 : 0.9;
+    box(3.0, 0.5, 0.25, P.metal, x, y + 2.75, z - 0.3);                 // вывеска (пустая)
+    box(0.08, 2.4, 0.16, P.metal, x, y + 1.3, z - 0.28);                 // переплёт витрины
+    // силуэты товаров на полках
+    for (let k = 0; k < 3; k++) box(0.5, 0.8 + (k % 2) * 0.4, 0.2, look === 'day' ? 0xc99f70 : 0xb0773c, x - 0.8 + k * 0.8, y + 0.5 + (k % 2) * 0.2, z - 0.2);
+  }
+};
+shopRow(0, -9); shopRow(4.2, -12); shopRow(8.4, -15);
+// плиты этажей с балконами и стеклянными перилами
+for (const [y, z0, z1] of [[4.2, -12.6, -6.2], [8.4, -15.6, -9.2]]) {
+  box(40, 0.5, z1 - z0, P.slab, 0, y - 0.25, (z0 + z1) / 2);
+  const glass = new THREE.Mesh(new THREE.BoxGeometry(40, 1.0, 0.05), new THREE.MeshBasicMaterial({ color: 0x9fd0ff, transparent: true, opacity: 0.18 }));
+  glass.position.set(0, y + 0.5, z1); scene.add(glass);
+  box(40, 0.08, 0.12, P.metal, 0, y + 1.02, z1);
+  for (let i = -12; i <= 12; i++) box(0.05, 1.0, 0.05, P.metal, i * 1.6, y + 0.5, z1);
+}
+// колонны
+for (const x of [-9, -2.5, 4, 10.5]) { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 13, 24), toon(P.pill)); c.position.set(x, 6.5, -6.6); scene.add(c); }
+// эскалатор на второй этаж
+const esc = new THREE.Group(); scene.add(esc); esc.position.set(-4.2, 0, -1.2);
+const len = Math.hypot(4.2, 5.2), ang = Math.atan2(4.2, 5.2);
+const run = (w, h, x, c, em) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, len), toon(c, em)); o.position.set(x, 2.1, -2.6); o.rotation.x = ang; esc.add(o); return o; };
+run(1.4, 0.5, 0, P.metal);
+for (let i = 0; i < 18; i++) { const s = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.06, 0.3), toon(0x5d6987, look === 'night' ? 0x7fb6ff : 0)); const t = i / 17; s.position.set(0, 0.32 + 4.2 * t, -5.2 * t); s.material.emissiveIntensity = 0.35; esc.add(s); }
+for (const s of [-1, 1]) { run(0.12, 1.1, 0.72 * s, 0x111522).position.y = 2.6; }
+box(1.6, 0.25, 1.2, P.metal, -4.2, 0.12, 0.2);
+// стеклянный потолок
+for (let i = -6; i <= 6; i++) box(0.12, 0.12, 30, P.metal, i * 3, 12.5, -5);
+for (let k = -4; k <= 4; k++) box(40, 0.12, 0.12, P.metal, 0, 12.5, -5 + k * 3);
+// скамейка и урна для масштаба
+box(2.2, 0.12, 0.6, 0x7a5236, 5.6, 0.5, -1.5); for (const s of [-1, 1]) box(0.1, 0.5, 0.5, P.metal, 5.6 + s * 0.95, 0.25, -1.5);
+const bin = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.24, 0.8, 20), toon(P.metal)); bin.position.set(7.2, 0.4, -1.4); scene.add(bin);
+// тёплые пятна света от витрин
+for (let i = -5; i <= 5; i += 2) { const l = new THREE.PointLight(P.shop, look === 'day' ? 0 : 8, 9, 1.6); l.position.set(i * 3.4, 1.6, -8); scene.add(l); }
+
+// герой
+const hero = makeHero(toon, { worried: true }); hero.position.set(2.2, 0, 5.6); hero.rotation.y = -0.45; scene.add(hero);
+const hp = hero.userData.parts; hp.head.rotation.set(-0.08, -0.15, 0.08); hp.armR.rotation.z = -0.15; hp.armL.rotation.z = 0.5;
+const shadow = new THREE.Mesh(new THREE.CircleGeometry(0.55, 32), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35 }));
+shadow.rotation.x = -Math.PI / 2; shadow.position.set(2.2, 0.012, 5.65); scene.add(shadow);
+const key = new THREE.PointLight(0xffe2b0, look === 'day' ? 0 : 14, 6, 1.2); key.position.set(1.0, 2.6, 7.5); scene.add(key);
+
+// --- чернильный контур: разрывы глубины и нормалей -> чёрная линия
+const rtC = new THREE.WebGLRenderTarget(PW, PH, { depthTexture: new THREE.DepthTexture(PW, PH) });
+const rtN = new THREE.WebGLRenderTarget(PW, PH);
+const nMat = new THREE.MeshNormalMaterial();
+const q = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
+  uniforms: { tC: { value: rtC.texture }, tD: { value: rtC.depthTexture }, tN: { value: rtN.texture }, px: { value: new THREE.Vector2(1.6 / PW, 1.6 / PH) }, ink: { value: new THREE.Color(0x0c0d14) }, paint: { value: paint ? 1 : 0 } },
+  vertexShader: 'varying vec2 v; void main(){ v=uv; gl_Position=vec4(position,1.); }',
+  fragmentShader: `uniform sampler2D tC,tD,tN; uniform vec2 px; uniform vec3 ink; uniform float paint; varying vec2 v;
+    // фильтр Кувахары: мазки кисти
+    vec3 kuwa(vec2 u){ vec3 bm=vec3(0.); float bv=1e9; for(int q=0;q<4;q++){ vec2 sg=vec2(q==0||q==2?-1.:1., q<2?-1.:1.); vec3 s=vec3(0.),s2=vec3(0.);
+      for(int i=0;i<=5;i++) for(int j=0;j<=5;j++){ vec3 c=texture2D(tC,u+sg*vec2(float(i),float(j))*px*1.1).rgb; s+=c; s2+=c*c; }
+      s/=36.; s2=abs(s2/36.-s*s); float va=s2.r+s2.g+s2.b; if(va<bv){bv=va;bm=s;} } return bm; }
+    float ld(vec2 u){ float z=texture2D(tD,u).r*2.-1.; return (2.*0.1*100.)/(100.+0.1-z*(100.-0.1)); }
+    void main(){
+      float d=ld(v); vec3 n=texture2D(tN,v).rgb; float e=0.;
+      for(int i=0;i<4;i++){ vec2 o = i==0?vec2(px.x,0.):i==1?vec2(-px.x,0.):i==2?vec2(0.,px.y):vec2(0.,-px.y);
+        float dd=ld(v+o); vec3 nn=texture2D(tN,v+o).rgb;
+        e=max(e, step(0.035*d, abs(dd-d))); e=max(e, step(0.35, distance(n,nn))); }
+      vec3 c= paint>0.5 ? kuwa(v) : texture2D(tC,v).rgb;
+      gl_FragColor=vec4(mix(c, ink, e*0.92),1.);
+      #include <colorspace_fragment>
+    }`,
+}));
+const post = new THREE.Scene(); post.add(q); const oc = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+r.setRenderTarget(rtC); r.render(scene, cam);
+scene.overrideMaterial = nMat; const bg = scene.background; scene.background = new THREE.Color(0x8080ff); scene.fog = null;
+r.setRenderTarget(rtN); r.render(scene, cam);
+scene.overrideMaterial = null; scene.background = bg;
+r.setRenderTarget(null); r.render(post, oc);
+window.READY = true;
+</script></body></html>

@@ -1,0 +1,133 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>html,body{margin:0;background:#000}canvas{display:block}</style>
+<script src="./node_modules/roughjs/bundled/rough.js"></script>
+</head><body><canvas id="c" width="1280" height="720"></canvas>
+<script>
+// Одна сцена — несколько «кистей». ?look=cartoon|sketch|flat|noir
+// cartoon: rough.js, плоская заливка + живой контур от руки
+// sketch:  rough.js, штриховка карандашом на бумаге
+// flat:    чистый вектор, градиенты и свечение
+// noir:    два цвета, тёмный силуэт и жёлтый свет
+const look = new URLSearchParams(location.search).get('look') || 'cartoon';
+const cv = document.getElementById('c'), x = cv.getContext('2d'), rc = rough.canvas(cv);
+const W = 1280, H = 720;
+let seed = 7, heroSolid = false;
+const PAL = {
+  cartoon: { sky: '#101a3a', wall: '#2c3a66', wall2: '#24305a', slab: '#3e4d80', shop: '#ffcf73', shop2: '#ffb347', goods: '#b8713a', metal: '#151b30', floor: '#27335a', tile: '#1d2747', glass: 'rgba(150,200,255,0.18)', ink: '#0d0f1a', skin: '#f6f2ea', hat: '#f4b41a', hat2: '#d9970d', hair: '#7a4a26', hood: '#8b8f97', hood2: '#73777f', dark: '#1d1d22', shoe: '#a2a8b0', esc: '#5f6c95', paper: null },
+  sketch: { sky: '#e9e1cf', wall: '#9aa6c4', wall2: '#8592b3', slab: '#b9c2d8', shop: '#f3c76a', shop2: '#e9a94a', goods: '#a8744a', metal: '#4a4e5c', floor: '#c9c1ad', tile: '#8f8878', glass: 'rgba(120,150,200,0.15)', ink: '#2b2a33', skin: '#fbf8f1', hat: '#f0b42a', hat2: '#d39a1a', hair: '#7a4a26', hood: '#9a9ca3', hood2: '#84868d', dark: '#2b2a33', shoe: '#a2a8b0', esc: '#7b84a0', paper: '#efe8d6' },
+  flat: { sky: '#0c1631', wall: '#25335e', wall2: '#1e2a50', slab: '#33437a', shop: '#ffd88a', shop2: '#ffb25b', goods: '#c07a3e', metal: '#121830', floor: '#1f2b52', tile: '#18223f', glass: 'rgba(150,200,255,0.12)', ink: null, skin: '#f6f2ea', hat: '#f6b61d', hat2: '#dc9a0c', hair: '#7a4a26', hood: '#8b8f97', hood2: '#6f737b', dark: '#1b1b20', shoe: '#a2a8b0', esc: '#56638f', paper: null },
+  noir: { sky: '#0a0a0c', wall: '#16161b', wall2: '#111115', slab: '#1d1d23', shop: '#ffd23f', shop2: '#ffb000', goods: '#2a2416', metal: '#000', floor: '#121216', tile: '#0b0b0e', glass: 'rgba(255,220,120,0.06)', ink: '#000', skin: '#f2f2f2', hat: '#ffd23f', hat2: '#e0a800', hair: '#2a2a2a', hood: '#3a3a42', hood2: '#2c2c33', dark: '#050505', shoe: '#555', esc: '#2a2a33', paper: null },
+}[look];
+
+// --- «перо»: одна функция на все стили
+function opt(fill, extra = {}) {
+  const o = { seed: seed++, fill, stroke: PAL.ink || 'none', strokeWidth: 2.2, roughness: 1.1, bowing: 0.8, ...extra };
+  if (look === 'sketch' && heroSolid) Object.assign(o, { fillStyle: 'solid', roughness: 1.3, strokeWidth: 2 });
+  else if (look === 'sketch') Object.assign(o, { fillStyle: 'hachure', hachureGap: 5, fillWeight: 1.1, hachureAngle: -41 + (seed % 7) * 6, roughness: 1.6, strokeWidth: 1.6 });
+  else Object.assign(o, { fillStyle: 'solid' });
+  if (look === 'noir') Object.assign(o, { roughness: 0.3, strokeWidth: 1.5 });
+  return o;
+}
+const clean = look === 'flat';
+function poly(pts, fill, e) {
+  if (clean) { x.beginPath(); pts.forEach(([a, b], i) => i ? x.lineTo(a, b) : x.moveTo(a, b)); x.closePath(); x.fillStyle = fill; x.fill(); return; }
+  rc.polygon(pts, opt(fill, e));
+}
+function rect(a, b, w, h, fill, e) { poly([[a, b], [a + w, b], [a + w, b + h], [a, b + h]], fill, e); }
+function circ(a, b, d, fill, e) { if (clean) { x.beginPath(); x.arc(a, b, d / 2, 0, 7); x.fillStyle = fill; x.fill(); return; } rc.circle(a, b, d, opt(fill, e)); }
+function ell(a, b, w, h, fill, e) { if (clean) { x.beginPath(); x.ellipse(a, b, w / 2, h / 2, 0, 0, 7); x.fillStyle = fill; x.fill(); return; } rc.ellipse(a, b, w, h, opt(fill, e)); }
+function line(a, b, c, d, col, w = 2) { if (clean) { x.strokeStyle = col; x.lineWidth = w; x.lineCap = 'round'; x.beginPath(); x.moveTo(a, b); x.lineTo(c, d); x.stroke(); return; } rc.line(a, b, c, d, { seed: seed++, stroke: col, strokeWidth: w, roughness: look === 'noir' ? 0.3 : 1 }); }
+function glow(a, b, r, col, k = 0.5) { if (look === 'sketch') return; const g = x.createRadialGradient(a, b, 0, a, b, r); g.addColorStop(0, col); g.addColorStop(1, 'rgba(0,0,0,0)'); x.globalAlpha = k; x.fillStyle = g; x.fillRect(a - r, b - r, 2 * r, 2 * r); x.globalAlpha = 1; }
+
+// --- фон
+if (PAL.paper) { x.fillStyle = PAL.paper; x.fillRect(0, 0, W, H); }
+else { const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, PAL.sky); g.addColorStop(1, PAL.wall2); x.fillStyle = g; x.fillRect(0, 0, W, H); }
+const VP = [640, 330]; // точка схода
+// стеклянный потолок
+poly([[0, 0], [W, 0], [W, 70], [0, 70]], PAL.sky);
+for (let i = 0; i <= 16; i++) line(i * 80, 0, VP[0] + (i * 80 - VP[0]) * 0.82, 70, PAL.metal, 3);
+line(0, 35, W, 35, PAL.metal, 3); line(0, 70, W, 70, PAL.metal, 4);
+
+// этажи: [верх, низ, отступ по краям]
+const floors = [[78, 200, 40], [214, 380, 20], [394, 560, 0]];
+floors.forEach(([t, b, m], fi) => {
+  rect(m, t, W - 2 * m, b - t, fi % 2 ? PAL.wall : PAL.wall2);
+  const n = 6 + fi, sw = (W - 2 * m) / n;
+  for (let i = 0; i < n; i++) {
+    const sx = m + i * sw + 14, sy = t + 26, ww = sw - 28, hh = b - t - 40;
+    rect(sx - 4, t + 6, ww + 8, 16, PAL.metal);                     // пустая вывеска
+    glow(sx + ww / 2, sy + hh / 2, ww * 0.9, PAL.shop2, 0.35);
+    rect(sx, sy, ww, hh, i % 3 === 1 ? PAL.shop2 : PAL.shop);
+    // товары-силуэты
+    for (let k = 0; k < 4; k++) { const gh = hh * (0.25 + ((k * 37 + i * 11 + fi) % 5) * 0.08); rect(sx + 8 + k * (ww - 16) / 4, sy + hh - gh, (ww - 16) / 4 - 6, gh, PAL.goods); }
+    line(sx + ww / 2, sy, sx + ww / 2, sy + hh, PAL.metal, 3);
+  }
+  // плита балкона и перила
+  if (fi < 2) {
+    rect(m - 10, b - 4, W - 2 * m + 20, 18, PAL.slab);
+    poly([[m - 10, b - 44], [W - m + 10, b - 44], [W - m + 10, b - 4], [m - 10, b - 4]], PAL.glass, { stroke: 'none', fillStyle: 'solid' });
+    line(m - 10, b - 44, W - m + 10, b - 44, PAL.metal, 4);
+    for (let i = 0; i <= 26; i++) line(m + i * (W - 2 * m) / 26, b - 44, m + i * (W - 2 * m) / 26, b - 4, PAL.metal, 2);
+  }
+});
+// колонны
+for (const cx of [150, 640, 1130]) { rect(cx - 20, 70, 40, 490, PAL.slab); line(cx - 8, 75, cx - 8, 555, PAL.wall, 3); }
+
+// пол с плиткой в перспективе
+rect(0, 560, W, 160, PAL.floor);
+for (let i = -10; i <= 26; i++) line(VP[0] + (i * 80 - VP[0]) * 0.55, 560, i * 80 * 1.6 - 640 * 0.6, 720, PAL.tile, 2);
+for (const yy of [585, 620, 668]) line(0, yy, W, yy, PAL.tile, 2);
+
+// эскалатор на второй этаж
+poly([[300, 600], [380, 600], [560, 378], [500, 378]], PAL.metal);
+for (let i = 0; i < 14; i++) { const t = i / 13; const a = 312 + (505 - 312) * t, b = 592 - 210 * t; line(a, b, a + 52, b, PAL.esc, 4); }
+poly([[286, 560], [302, 560], [498, 330], [482, 330]], PAL.dark);
+poly([[372, 600], [388, 600], [570, 360], [556, 360]], PAL.dark);
+rect(280, 596, 120, 16, PAL.metal);
+
+// скамейка и урна
+rect(980, 590, 170, 14, '#7a5236'); rect(990, 604, 10, 28, PAL.metal); rect(1130, 604, 10, 28, PAL.metal);
+rect(1190, 580, 40, 56, PAL.metal);
+
+// --- герой (ноги на (850, 690))
+const hx = 850, hy = 690, S = 1.25;
+const X = v => hx + v * S, Y = v => hy + v * S; heroSolid = true;
+ell(X(0), Y(0), 150 * S, 22 * S, 'rgba(0,0,0,0.35)', { stroke: 'none' });
+line(X(-14), Y(-10), X(-14), Y(-92), PAL.dark, 6 * S); line(X(14), Y(-10), X(14), Y(-92), PAL.dark, 6 * S);
+ell(X(-22), Y(-6), 38 * S, 18 * S, PAL.shoe); ell(X(22), Y(-6), 38 * S, 18 * S, PAL.shoe);
+// руки (левая у рта — страх)
+line(X(-34), Y(-160), X(-58), Y(-110), PAL.hood2, 13 * S); circ(X(-60), Y(-106), 20 * S, PAL.dark);
+// худи
+poly([[X(-42), Y(-90)], [X(42), Y(-90)], [X(46), Y(-150)], [X(32), Y(-176)], [X(-32), Y(-176)], [X(-46), Y(-150)]], PAL.hood);
+rect(X(-24), Y(-128), 48 * S, 22 * S, PAL.hood2);
+line(X(-8), Y(-172), X(-10), Y(-140), PAL.ink || '#555', 2); line(X(8), Y(-172), X(10), Y(-140), PAL.ink || '#555', 2);
+// голова
+circ(X(0), Y(-232), 118 * S, PAL.skin);
+if (look === 'flat') { x.fillStyle = 'rgba(80,100,160,0.18)'; x.beginPath(); x.arc(X(14), Y(-226), 59 * S, -1.2, 1.9); x.fill(); }
+// волосы
+for (const [a, b, c] of [[-56, -248, -70], [-52, -232, -64], [56, -248, 70], [52, -232, 64]]) poly([[X(a), Y(b)], [X(a + Math.sign(a) * 4), Y(b + 22)], [X(c), Y(b + 4)]], PAL.hair);
+// шапка
+poly([[X(-58), Y(-246)], [X(-54), Y(-290)], [X(-30), Y(-318)], [X(0), Y(-326)], [X(30), Y(-318)], [X(54), Y(-290)], [X(58), Y(-246)]], PAL.hat);
+for (let i = -3; i <= 3; i++) line(X(i * 14), Y(-262), X(i * 12), Y(-314 + Math.abs(i) * 3), PAL.hat2, 3);
+rect(X(-62), Y(-262), 124 * S, 22 * S, PAL.hat2);
+circ(X(0), Y(-332), 26 * S, PAL.hat);
+// глаза и рот (испуг)
+ell(X(-20), Y(-222), 14 * S, 19 * S, PAL.dark); ell(X(22), Y(-222), 14 * S, 19 * S, PAL.dark);
+circ(X(-18), Y(-226), 4 * S, '#fff', { stroke: 'none' }); circ(X(24), Y(-226), 4 * S, '#fff', { stroke: 'none' });
+ell(X(2), Y(-192), 14 * S, 10 * S, PAL.dark);
+line(X(-34), Y(-244), X(-12), Y(-240), PAL.dark, 3); line(X(14), Y(-240), X(36), Y(-246), PAL.dark, 3);
+
+// рука у щеки — поверх головы
+line(X(34), Y(-160), X(58), Y(-196), PAL.hood2, 13 * S); circ(X(50), Y(-204), 22 * S, PAL.dark);
+
+// виньетка и зерно
+if (look !== 'sketch') {
+  const v = x.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, H * 0.95); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,10,0.55)');
+  x.fillStyle = v; x.fillRect(0, 0, W, H);
+}
+const img = x.getImageData(0, 0, W, H), d = img.data;
+const amt = look === 'sketch' ? 18 : 8;
+for (let i = 0; i < d.length; i += 4) { const n = (Math.random() - 0.5) * amt; d[i] += n; d[i + 1] += n; d[i + 2] += n; }
+x.putImageData(img, 0, 0);
+window.READY = true;
+</script></body></html>

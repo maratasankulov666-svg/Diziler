@@ -7,3 +7,4 @@ __pycache__/
 # survival project: внешние репозитории стилей (качаются tools/setup.sh)
 survival/vendor/
 survival/**/*.log
+node_modules/

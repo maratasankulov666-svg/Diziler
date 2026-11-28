@@ -10,3 +10,5 @@ survival/**/*.log
 node_modules/
 survival/omni/
 survival/tests/tts_compare/*.wav
+gen.log
+gen2.log

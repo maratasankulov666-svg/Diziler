@@ -8,3 +8,5 @@ __pycache__/
 survival/vendor/
 survival/**/*.log
 node_modules/
+survival/omni/
+survival/tests/tts_compare/*.wav

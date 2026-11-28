@@ -7,12 +7,13 @@ export function makeHero(toon, opts = {}) {
   const g = new THREE.Group(); const parts = {};
   const m = (geo, col, x, y, z, name) => { const o = new THREE.Mesh(geo, toon(col)); o.position.set(x, y, z); g.add(o); if (name) parts[name] = o; return o; };
 
-  // ноги-палочки и кроссовки
+  // ноги-палочки и кроссовки (группа с шарниром в бедре — для ходьбы)
   for (const s of [-1, 1]) {
-    m(new THREE.CylinderGeometry(0.045, 0.045, 0.62, 12), C.dark, 0.11 * s, 0.38, 0, s < 0 ? 'legL' : 'legR');
-    const shoe = m(new THREE.CapsuleGeometry(0.085, 0.16, 6, 12), C.shoe, 0.12 * s, 0.07, 0.06);
-    shoe.rotation.x = Math.PI / 2;
-    const sole = m(new THREE.BoxGeometry(0.19, 0.04, 0.36), C.sole, 0.12 * s, 0.02, 0.06);
+    const leg = new THREE.Group(); leg.position.set(0.11 * s, 0.69, 0); g.add(leg); parts[s < 0 ? 'legL' : 'legR'] = leg;
+    const add = (geo, col, x, y, z) => { const o = new THREE.Mesh(geo, toon(col)); o.position.set(x, y, z); leg.add(o); return o; };
+    add(new THREE.CylinderGeometry(0.045, 0.045, 0.62, 12), C.dark, 0, -0.31, 0);
+    add(new THREE.CapsuleGeometry(0.085, 0.16, 6, 12), C.shoe, 0.01 * s, -0.62, 0.06).rotation.x = Math.PI / 2;
+    add(new THREE.BoxGeometry(0.19, 0.04, 0.36), C.sole, 0.01 * s, -0.67, 0.06);
   }
   // худи
   const body = m(new THREE.CapsuleGeometry(0.29, 0.22, 8, 20), C.hoodie, 0, 0.98, 0, 'body');

@@ -13,6 +13,7 @@ POSES={  # углы в градусах (0 = вниз), плечо/локоть/
  "point":   dict(sl=15, el=8, sr=-95, er=-95,hl=6,  kl=0,  hr=-6, kr=0),
  "scared":  dict(sl=115,el=-35,sr=-115,er=35,hl=12,kl=-6,hr=-12,kr=6),
  "carry":   dict(sl=-60,el=-120,sr=60,er=120,hl=6, kl=0,  hr=-6, kr=0),
+ "walk2":   dict(sl=30, el=25, sr=-25,er=-20,hl=24, kl=-4, hr=-22,kr=10),
  "sit":     dict(sl=30, el=60, sr=-30, er=-60,hl=-80,kl=0, hr=-75,kr=5),
 }
 FACES={"neutral":(0,0),"worried":(1,-1),"scared":(2,-1),"happy":(0,1),"determined":(-1,0)}
@@ -20,9 +21,9 @@ FACES={"neutral":(0,0),"worried":(1,-1),"scared":(2,-1),"happy":(0,1),"determine
 def _pt(o,ang,l):  # ang 0 = вниз, положительный = к правой стороне экрана
     a=math.radians(ang); return (o[0]+l*math.sin(a), o[1]+l*math.cos(a))
 
-def draw_hero(base, x, y, h, pose="stand", face="neutral", look=1, backpack=True, beanie=True, ss=3):
+def draw_hero(base, x, y, h, pose="stand", face="neutral", look=1, backpack=True, beanie=True, ss=3, shadow=True, silhouette=None):
     """x,y — точка между стоп на земле; h — рост в пикселях; look=1 вправо, -1 влево."""
-    p=dict(POSES[pose]); W=int(h*1.6)*ss; H=int(h*1.25)*ss
+    p=dict(POSES[pose]) if isinstance(pose,str) else dict(pose); W=int(h*1.6)*ss; H=int(h*1.25)*ss
     L=Image.new("RGBA",(W,H),(0,0,0,0)); d=ImageDraw.Draw(L)
     u=h*ss; lw=max(3,int(u*0.034)); cx=W/2; gy=H-u*0.08
     r=u*0.175; leg=u*0.33; torso=u*0.29; arm=u*0.18
@@ -67,7 +68,10 @@ def draw_hero(base, x, y, h, pose="stand", face="neutral", look=1, backpack=True
     if look<0: L=L.transpose(Image.FLIP_LEFT_RIGHT)
     L=L.resize((W//ss,H//ss),Image.LANCZOS)
     # мягкая тень на земле
-    sh_=Image.new("RGBA",base.size,(0,0,0,0)); ImageDraw.Draw(sh_).ellipse([x-h*0.22,y-h*0.03,x+h*0.22,y+h*0.03],fill=(0,0,0,70))
-    base.alpha_composite(sh_.filter(ImageFilter.GaussianBlur(h*0.02)))
+    if silhouette:
+        a=L.getchannel('A'); L=Image.new('RGBA',L.size,silhouette); L.putalpha(a)
+    if shadow:
+      sh_=Image.new("RGBA",base.size,(0,0,0,0)); ImageDraw.Draw(sh_).ellipse([x-h*0.22,y-h*0.03,x+h*0.22,y+h*0.03],fill=(0,0,0,70))
+      base.alpha_composite(sh_.filter(ImageFilter.GaussianBlur(h*0.02)))
     base.alpha_composite(L,(int(x-L.width/2),int(y-L.height+h*0.08)))
     return base

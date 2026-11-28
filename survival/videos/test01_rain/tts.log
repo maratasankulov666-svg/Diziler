@@ -1,0 +1,26 @@
+
+********
+Warning: flash-attn is not installed. Will only run the manual PyTorch version. Please install flash-attn for faster inference.
+********
+ 
+/bin/sh: 1: sox: not found
+SoX could not be found!
+
+    If you do not have SoX, proceed here:
+     - - - http://sox.sourceforge.net/ - - -
+
+    If you do (or think that you should) have SoX, double-check your
+    path variables.
+    
+Fetching 4 files:   0%|          | 0/4 [00:00<?, ?it/s]Fetching 4 files:  25%|██▌       | 1/4 [00:00<00:01,  2.55it/s]Fetching 4 files: 100%|██████████| 4/4 [00:04<00:00,  1.14s/it]Fetching 4 files: 100%|██████████| 4/4 [00:04<00:00,  1.14s/it]
+load 25
+Setting `pad_token_id` to `eos_token_id`:2150 for open-end generation.
+1 22 s 6.7 audio
+Setting `pad_token_id` to `eos_token_id`:2150 for open-end generation.
+2 26 s 7.4 audio
+Setting `pad_token_id` to `eos_token_id`:2150 for open-end generation.
+3 35 s 10.3 audio
+Setting `pad_token_id` to `eos_token_id`:2150 for open-end generation.
+4 27 s 7.5 audio
+Setting `pad_token_id` to `eos_token_id`:2150 for open-end generation.
+5 29 s 8.4 audio

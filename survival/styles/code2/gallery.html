@@ -1,0 +1,175 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style>
+<script src="./node_modules/zdog/dist/zdog.dist.js"></script>
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js"}}</script>
+</head><body><script type="module">
+// Галерея стилей: одна сцена, разные материалы / герои / постобработка. ?v=имя (см. VARIANTS)
+import * as THREE from 'three';
+import { makeHero } from './hero.js';
+import { drawHero2D } from './hero2d.js';
+import { drawZHero } from './zhero.js';
+
+const VARIANTS = {
+  toon:     { mat: 'toon', hero: '3d', post: 'ink' },
+  hero2d:   { mat: 'toon', hero: '2d', post: 'dof' },
+  zdog:     { mat: 'toon', hero: 'z', post: 'dof' },
+  soft:     { mat: 'soft', hero: '3d', post: 'none' },
+  soft2d:   { mat: 'soft', hero: '2d', post: 'dof' },
+  pixel:    { mat: 'toon', hero: '3d', post: 'pixel' },
+  comic:    { mat: 'toon', hero: '3d', post: 'comic' },
+  water:    { mat: 'toon', hero: '2d', post: 'water', pal: 'day' },
+  lowpoly:  { mat: 'flat', hero: 'z', post: 'none', pal: 'dusk' },
+  iso:      { mat: 'toon', hero: '3d', post: 'ink', cam: 'iso' },
+  noir:     { mat: 'toon', hero: '2d', post: 'noir' },
+  paint:    { mat: 'toon', hero: '3d', post: 'paint' },
+};
+const V = VARIANTS[new URLSearchParams(location.search).get('v') || 'toon'];
+const W = 1280, H = 720;
+const r = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true }); r.setSize(W, H); document.body.appendChild(r.domElement);
+if (V.mat === 'soft') { r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.15; }
+
+const grad = new THREE.DataTexture(new Uint8Array([95, 95, 95, 255, 175, 175, 175, 255, 255, 255, 255, 255]), 3, 1);
+grad.minFilter = grad.magFilter = THREE.NearestFilter; grad.needsUpdate = true;
+const mat = (c, em = 0, ei = 1) => {
+  if (V.mat === 'soft') return new THREE.MeshStandardMaterial({ color: c, roughness: 0.75, metalness: 0.05, emissive: em || 0, emissiveIntensity: ei });
+  if (V.mat === 'flat') return new THREE.MeshLambertMaterial({ color: c, flatShading: true, emissive: em || 0, emissiveIntensity: ei });
+  return new THREE.MeshToonMaterial({ color: c, gradientMap: grad, emissive: em || 0, emissiveIntensity: ei });
+};
+
+const PAL = {
+  night: { sky: 0x0b1530, fog: 0x14204a, hemi: [0x4a6bc4, 0x10142a, 1.4], sun: [0x8fb0ff, 1.0], floor: 0x26324f, wall: 0x2f3c63, slab: 0x3a4870, metal: 0x1a2138, pill: 0x34416a, shop: 0xffc46b, goods: 0xb0773c, ei: 0.9, pl: 8 },
+  day: { sky: 0xcfe8ff, fog: 0xe6f1ff, hemi: [0xffffff, 0x9a8a78, 1.7], sun: [0xfff1da, 2.0], floor: 0xdccfbd, wall: 0xeee5d8, slab: 0xf5efe5, metal: 0x7d8490, pill: 0xe2d9cb, shop: 0xfff1c9, goods: 0xc99f70, ei: 0.3, pl: 0 },
+  dusk: { sky: 0x2b2a5e, fog: 0x5a4a7e, hemi: [0xffb08a, 0x2a2350, 1.5], sun: [0xff9e6b, 1.6], floor: 0x4a3f6e, wall: 0x5d4f86, slab: 0x6d5f96, metal: 0x2a2347, pill: 0x66588f, shop: 0xffc46b, goods: 0xb0773c, ei: 0.8, pl: 6 },
+}[V.pal || 'night'];
+if (V.mat === 'soft') { PAL.hemi[2] *= 0.8; }
+
+const scene = new THREE.Scene(); scene.background = new THREE.Color(PAL.sky); scene.fog = new THREE.Fog(PAL.fog, 14, 46);
+scene.add(new THREE.HemisphereLight(...PAL.hemi));
+const sun = new THREE.DirectionalLight(...PAL.sun); sun.position.set(-6, 14, 8); scene.add(sun);
+if (V.mat === 'soft') { sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16, far: 50 }); sun.shadow.bias = -0.0005; }
+const B = (w, h, d, c, x, y, z, em, ei) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(c, em, ei)); o.position.set(x, y, z); scene.add(o); return o; };
+const cyl = (rt, rb, h, c, x, y, z) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, V.mat === 'flat' ? 8 : 24), mat(c)); o.position.set(x, y, z); scene.add(o); return o; };
+
+// --- торговый центр
+B(60, 0.2, 40, PAL.floor, 0, -0.1, 0);
+for (let i = -14; i <= 14; i++) B(0.03, 0.01, 40, PAL.metal, i * 1.6, 0.005, 0);
+const row = (y, z) => {
+  B(40, 4, 0.4, PAL.wall, 0, y + 2, z - 0.6);
+  for (let i = -5; i <= 5; i++) {
+    const x = i * 3.4;
+    B(2.8, 2.4, 0.1, PAL.shop, x, y + 1.3, z - 0.35, PAL.shop, PAL.ei);
+    B(3.0, 0.5, 0.25, PAL.metal, x, y + 2.75, z - 0.3); B(0.08, 2.4, 0.16, PAL.metal, x, y + 1.3, z - 0.28);
+    for (let k = 0; k < 3; k++) B(0.5, 0.8 + (k % 2) * 0.4, 0.2, PAL.goods, x - 0.8 + k * 0.8, y + 0.5 + (k % 2) * 0.2, z - 0.2);
+    // растение в кадке у каждой второй витрины
+    if (y === 0 && i % 2 === 0) { cyl(0.3, 0.25, 0.5, 0x8a5a3a, x + 1.5, 0.25, z + 0.6); const f = new THREE.Mesh(new THREE.IcosahedronGeometry(0.55, V.mat === 'flat' ? 0 : 2), mat(0x3f8f5a)); f.position.set(x + 1.5, 1.0, z + 0.6); scene.add(f); }
+  }
+};
+row(0, -9); row(4.2, -12); row(8.4, -15);
+for (const [y, z0, z1] of [[4.2, -12.6, -6.2], [8.4, -15.6, -9.2]]) {
+  B(40, 0.5, z1 - z0, PAL.slab, 0, y - 0.25, (z0 + z1) / 2);
+  const g = new THREE.Mesh(new THREE.BoxGeometry(40, 1.0, 0.05), new THREE.MeshBasicMaterial({ color: 0x9fd0ff, transparent: true, opacity: 0.15 })); g.position.set(0, y + 0.5, z1); scene.add(g);
+  B(40, 0.08, 0.12, PAL.metal, 0, y + 1.02, z1);
+  for (let i = -12; i <= 12; i++) B(0.05, 1.0, 0.05, PAL.metal, i * 1.6, y + 0.5, z1);
+}
+for (const x of [-9, -2.5, 4, 10.5]) cyl(0.45, 0.45, 13, PAL.pill, x, 6.5, -6.6);
+for (let i = -6; i <= 6; i++) B(0.12, 0.12, 30, PAL.metal, i * 3, 12.5, -5);
+for (let k = -4; k <= 4; k++) B(40, 0.12, 0.12, PAL.metal, 0, 12.5, -5 + k * 3);
+B(2.2, 0.12, 0.6, 0x7a5236, 5.6, 0.5, -1.5); for (const s of [-1, 1]) B(0.1, 0.5, 0.5, PAL.metal, 5.6 + s * 0.95, 0.25, -1.5);
+cyl(0.28, 0.24, 0.8, PAL.metal, 7.2, 0.4, -1.4);
+// эскалатор
+const eg = new THREE.Group(); scene.add(eg); eg.position.set(-4.2, 0, -1.2);
+const len = Math.hypot(4.2, 5.2), ang = Math.atan2(4.2, 5.2);
+const run = (w, h, x, c) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, len), mat(c)); o.position.set(x, 2.1, -2.6); o.rotation.x = ang; eg.add(o); return o; };
+run(1.4, 0.5, 0, PAL.metal); for (const s of [-1, 1]) run(0.12, 1.1, 0.72 * s, 0x111522).position.y = 2.6;
+for (let i = 0; i < 18; i++) { const s = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.06, 0.3), mat(0x5d6987)); const t = i / 17; s.position.set(0, 0.32 + 4.2 * t, -5.2 * t); eg.add(s); }
+B(1.6, 0.25, 1.2, PAL.metal, -4.2, 0.12, 0.2);
+for (let i = -5; i <= 5; i += 2) { const l = new THREE.PointLight(PAL.shop, PAL.pl, 9, 1.6); l.position.set(i * 3.4, 1.6, -8); scene.add(l); }
+
+// --- герой
+const HP = new THREE.Vector3(2.2, 0, 5.6);
+const blob = new THREE.Mesh(new THREE.CircleGeometry(0.6, 32), new THREE.MeshBasicMaterial({ color: 0, transparent: true, opacity: 0.35, depthWrite: false }));
+blob.rotation.x = -Math.PI / 2; blob.position.set(HP.x, 0.012, HP.z + 0.05); scene.add(blob);
+const key = new THREE.PointLight(0xffe2b0, PAL.pl ? 14 : 0, 6, 1.2); key.position.set(1.0, 2.6, 7.5); scene.add(key);
+let sprite = null;
+if (V.hero === '3d') {
+  const h = makeHero(mat, { worried: true }); h.position.copy(HP); h.rotation.y = -0.45; scene.add(h);
+  const p = h.userData.parts; p.head.rotation.set(-0.08, -0.15, 0.08); p.armL.rotation.z = 0.5;
+} else {
+  const cv = document.createElement('canvas');
+  if (V.hero === '2d') drawHero2D(cv, { mood: 'worried', armR: -0.2, headTilt: 0.06 }); else drawZHero(cv, { mood: 'worried' });
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+  const hh = 3.0;
+  sprite = new THREE.Mesh(new THREE.PlaneGeometry(hh * 400 / 700, hh), new THREE.MeshBasicMaterial({ map: tex, alphaTest: 0.5, transparent: false }));
+  sprite.position.set(HP.x, hh / 2 - 0.02, HP.z); scene.add(sprite);
+  sprite.userData.nm = new THREE.ShaderMaterial({ uniforms: { map: { value: tex } }, vertexShader: 'varying vec2 v; void main(){ v=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }',
+    fragmentShader: 'uniform sampler2D map; varying vec2 v; void main(){ if(texture2D(map,v).a<0.5) discard; gl_FragColor=vec4(0.5,0.5,1.,1.); }' });
+}
+if (V.mat === 'soft') scene.traverse(o => { if (o.isMesh && o.material.isMeshStandardMaterial) { o.castShadow = true; o.receiveShadow = true; } });
+
+// --- камера
+let cam;
+if (V.cam === 'iso') { const s = 5.2; cam = new THREE.OrthographicCamera(-s * 16 / 9, s * 16 / 9, s, -s, 0.1, 100); cam.position.set(15, 12.5, 19); cam.lookAt(-0.5, 2.2, 0.5); }
+else { cam = new THREE.PerspectiveCamera(42, W / H, 0.1, 100); cam.position.set(0.8, 2.2, 13.5); cam.lookAt(-0.4, 3.4, 0); }
+if (sprite) sprite.quaternion.copy(cam.quaternion);
+const focus = cam.position.distanceTo(HP.clone().setY(1.2));
+
+// --- постобработка
+const MODES = { none: 0, ink: 1, dof: 2, pixel: 3, comic: 4, water: 5, noir: 6, paint: 7 };
+const rtC = new THREE.WebGLRenderTarget(W, H, { depthTexture: new THREE.DepthTexture(W, H), samples: 0 });
+const rtN = new THREE.WebGLRenderTarget(W, H);
+const nMat = new THREE.MeshNormalMaterial();
+const U = { tC: { value: rtC.texture }, tD: { value: rtC.depthTexture }, tN: { value: rtN.texture }, px: { value: new THREE.Vector2(1 / W, 1 / H) }, mode: { value: MODES[V.post] },
+  near: { value: cam.near }, far: { value: cam.far }, ortho: { value: cam.isOrthographicCamera ? 1 : 0 }, focus: { value: focus } };
+const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({ uniforms: U,
+  vertexShader: 'varying vec2 v; void main(){ v=uv; gl_Position=vec4(position,1.); }',
+  fragmentShader: `uniform sampler2D tC,tD,tN; uniform vec2 px; uniform int mode; uniform float near,far,ortho,focus; varying vec2 v;
+  float ld(vec2 u){ float z=texture2D(tD,u).r; if(ortho>0.5) return near+z*(far-near); z=z*2.-1.; return (2.*near*far)/(far+near-z*(far-near)); }
+  float h(vec2 p){ return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453); }
+  float vn(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.-2.*f); return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y); }
+  float fbm(vec2 p){ float s=0.,a=.5; for(int i=0;i<5;i++){ s+=a*vn(p); p*=2.03; a*=.5; } return s; }
+  float edge(vec2 u, float w){ float d=ld(u); vec3 n=texture2D(tN,u).rgb; float e=0.;
+    for(int i=0;i<4;i++){ vec2 o=(i==0?vec2(1,0):i==1?vec2(-1,0):i==2?vec2(0,1):vec2(0,-1))*px*w;
+      e=max(e,step(0.03*d,abs(ld(u+o)-d))); e=max(e,step(0.33,distance(n,texture2D(tN,u+o).rgb))); } return e; }
+  vec3 C(vec2 u){ return texture2D(tC,u).rgb; }
+  float L(vec3 c){ return dot(c,vec3(.299,.587,.114)); }
+  void main(){
+    vec3 c=C(v); vec3 ink=vec3(.05,.05,.08);
+    if(mode==1){ c=mix(c,ink,edge(v,1.6)*.92); }
+    else if(mode==2){ // глубина резкости: фон мягко размыт, герой резкий
+      float d=ld(v); float k=clamp(abs(d-focus)/focus*1.6,0.,1.)*7.; vec3 s=vec3(0.); float tw=0.;
+      for(int i=0;i<24;i++){ float a=float(i)*2.39996, rr=sqrt(float(i)/24.)*k; vec2 o=vec2(cos(a),sin(a))*rr*px; s+=C(v+o); tw+=1.; }
+      c=s/tw; c=mix(c,ink,edge(v,1.6)*.92*(1.-clamp(k/7.,0.,1.)*.8)); }
+    else if(mode==3){ // пиксель-арт
+      vec2 res=vec2(1./px.x,1./px.y); float b=4.; vec2 u=(floor(v*res/b)+.5)*b/res; c=C(u);
+      c=floor(c*8.+.5)/8.; float d=ld(u); float e=step(0.06*d,abs(ld(u+vec2(px.x*b,0.))-d))+step(0.06*d,abs(ld(u+vec2(0.,px.y*b))-d)); c=mix(c,c*.35,clamp(e,0.,1.)); }
+    else if(mode==4){ // комикс: постеризация + растровые точки + жирный контур
+      c=floor(c*4.+.5)/4.; float l=L(C(v)); vec2 g=mat2(.707,-.707,.707,.707)*(v/px)/7.; vec2 f=fract(g)-.5;
+      float dot_=step(length(f), (0.5-l)*0.9); c=mix(c, c*.6, dot_*step(l,.35)); c=mix(c,ink,edge(v,2.2)*.9); }
+    else if(mode==5){ // акварель: бумага, мягкие края, затемнение пигмента на границах, карандашная линия
+      vec3 s=vec3(0.); for(int i=0;i<12;i++){ float a=float(i)*2.39996, rr=sqrt(float(i)/12.)*3.; s+=C(v+vec2(cos(a),sin(a))*rr*px); } c=s/12.;
+      float gx=L(C(v+vec2(px.x*2.,0.)))-L(C(v-vec2(px.x*2.,0.))), gy=L(C(v+vec2(0.,px.y*2.)))-L(C(v-vec2(0.,px.y*2.)));
+      float paper=fbm(v*vec2(160.,90.)); float blot=fbm(v*vec2(9.,5.));
+      c=mix(c,vec3(1.,.98,.93),.12); c*=1.-clamp(length(vec2(gx,gy))*2.2,0.,.35); c*=.92+.12*blot; c*=.94+.08*paper;
+      c=mix(c,vec3(.32,.26,.22),edge(v,1.2)*.45); }
+    else if(mode==6){ // нуар: только чёрный, серый и тёплый жёлтый свет
+      float l=L(c); bool warm=c.r>.55&&c.g>.35&&c.b<.6*c.r; vec3 y=vec3(1.,.82,.25);
+      c= warm ? y*(.7+.3*step(.75,l)) : vec3(step(.62,l)*.95 + step(.3,l)*.12 + .02);
+      c=mix(c,vec3(0.),edge(v,1.6)); }
+    else if(mode==7){ // масло (фильтр Кувахары)
+      vec3 bm=vec3(0.); float bv=1e9; for(int q=0;q<4;q++){ vec2 sg=vec2(q==0||q==2?-1.:1., q<2?-1.:1.); vec3 s=vec3(0.),s2=vec3(0.);
+      for(int i=0;i<=5;i++) for(int j=0;j<=5;j++){ vec3 cc=C(v+sg*vec2(float(i),float(j))*px*1.3); s+=cc; s2+=cc*cc; }
+      s/=36.; s2=abs(s2/36.-s*s); float va=s2.r+s2.g+s2.b; if(va<bv){bv=va;bm=s;} } c=bm*(.96+.06*fbm(v*vec2(300.,170.))); c=mix(c,ink,edge(v,1.4)*.5); }
+    gl_FragColor=vec4(c,1.);
+    #include <tonemapping_fragment>
+    #include <colorspace_fragment>
+  }` }));
+const post = new THREE.Scene(); post.add(quad); const oc = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+r.setRenderTarget(rtC); r.render(scene, cam);
+const saved = []; scene.traverse(o => { if (o.isMesh) { saved.push([o, o.material]); o.material = o.userData.nm || (o.material.transparent ? o.material : nMat); } });
+const bg = scene.background, fog = scene.fog; scene.background = new THREE.Color(0x8080ff); scene.fog = null;
+r.setRenderTarget(rtN); r.render(scene, cam);
+saved.forEach(([o, m]) => o.material = m); scene.background = bg; scene.fog = fog;
+r.setRenderTarget(null); r.render(post, oc);
+window.READY = true;
+</script></body></html>

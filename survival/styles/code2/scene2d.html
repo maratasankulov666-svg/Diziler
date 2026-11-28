@@ -16,6 +16,7 @@ const PAL = {
   cartoon: { sky: '#101a3a', wall: '#2c3a66', wall2: '#24305a', slab: '#3e4d80', shop: '#ffcf73', shop2: '#ffb347', goods: '#b8713a', metal: '#151b30', floor: '#27335a', tile: '#1d2747', glass: 'rgba(150,200,255,0.18)', ink: '#0d0f1a', skin: '#f6f2ea', hat: '#f4b41a', hat2: '#d9970d', hair: '#7a4a26', hood: '#8b8f97', hood2: '#73777f', dark: '#1d1d22', shoe: '#a2a8b0', esc: '#5f6c95', paper: null },
   sketch: { sky: '#e9e1cf', wall: '#9aa6c4', wall2: '#8592b3', slab: '#b9c2d8', shop: '#f3c76a', shop2: '#e9a94a', goods: '#a8744a', metal: '#4a4e5c', floor: '#c9c1ad', tile: '#8f8878', glass: 'rgba(120,150,200,0.15)', ink: '#2b2a33', skin: '#fbf8f1', hat: '#f0b42a', hat2: '#d39a1a', hair: '#7a4a26', hood: '#9a9ca3', hood2: '#84868d', dark: '#2b2a33', shoe: '#a2a8b0', esc: '#7b84a0', paper: '#efe8d6' },
   flat: { sky: '#0c1631', wall: '#25335e', wall2: '#1e2a50', slab: '#33437a', shop: '#ffd88a', shop2: '#ffb25b', goods: '#c07a3e', metal: '#121830', floor: '#1f2b52', tile: '#18223f', glass: 'rgba(150,200,255,0.12)', ink: null, skin: '#f6f2ea', hat: '#f6b61d', hat2: '#dc9a0c', hair: '#7a4a26', hood: '#8b8f97', hood2: '#6f737b', dark: '#1b1b20', shoe: '#a2a8b0', esc: '#56638f', paper: null },
+  cutout: { sky: '#1b2a52', wall: '#3a5088', wall2: '#30447a', slab: '#5a6ea8', shop: '#ffd27a', shop2: '#ffb04f', goods: '#c4763a', metal: '#1c2442', floor: '#2c3c6c', tile: '#25335d', glass: 'rgba(170,210,255,0.2)', ink: null, skin: '#f8f4ec', hat: '#f6b61d', hat2: '#dc9a0c', hair: '#7a4a26', hood: '#9a9ea6', hood2: '#7f838b', dark: '#1b1b20', shoe: '#b4bac2', paper: null },
   noir: { sky: '#0a0a0c', wall: '#16161b', wall2: '#111115', slab: '#1d1d23', shop: '#ffd23f', shop2: '#ffb000', goods: '#2a2416', metal: '#000', floor: '#121216', tile: '#0b0b0e', glass: 'rgba(255,220,120,0.06)', ink: '#000', skin: '#f2f2f2', hat: '#ffd23f', hat2: '#e0a800', hair: '#2a2a2a', hood: '#3a3a42', hood2: '#2c2c33', dark: '#050505', shoe: '#555', esc: '#2a2a33', paper: null },
 }[look];
 
@@ -28,7 +29,8 @@ function opt(fill, extra = {}) {
   if (look === 'noir') Object.assign(o, { roughness: 0.3, strokeWidth: 1.5 });
   return o;
 }
-const clean = look === 'flat';
+const clean = look === 'flat' || look === 'cutout';
+if (look === 'cutout') { x.shadowColor = 'rgba(0,0,15,0.5)'; x.shadowBlur = 14; x.shadowOffsetX = 4; x.shadowOffsetY = 6; }
 function poly(pts, fill, e) {
   if (clean) { x.beginPath(); pts.forEach(([a, b], i) => i ? x.lineTo(a, b) : x.moveTo(a, b)); x.closePath(); x.fillStyle = fill; x.fill(); return; }
   rc.polygon(pts, opt(fill, e));
@@ -126,7 +128,8 @@ if (look !== 'sketch') {
   x.fillStyle = v; x.fillRect(0, 0, W, H);
 }
 const img = x.getImageData(0, 0, W, H), d = img.data;
-const amt = look === 'sketch' ? 18 : 8;
+x.shadowColor = 'transparent';
+const amt = look === 'sketch' ? 18 : look === 'cutout' ? 16 : 8;
 for (let i = 0; i < d.length; i += 4) { const n = (Math.random() - 0.5) * amt; d[i] += n; d[i + 1] += n; d[i + 2] += n; }
 x.putImageData(img, 0, 0);
 window.READY = true;

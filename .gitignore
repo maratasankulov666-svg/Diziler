@@ -17,3 +17,8 @@ survival/videos/test04_anim/*.wav
 survival/refs/comp/*.mp4
 survival/refs/comp/*.cuts*
 survival/refs/comp/transcribe.log
+survival/videos/ep01_blackout/vo/
+survival/videos/ep01_blackout/*.wav
+survival/videos/ep01_blackout/chk*
+survival/videos/ep01_blackout/*.log
+survival/assets/music/*.mp3

@@ -193,9 +193,10 @@ export function drawEntrance(c, W = 1280, H = 720) {
 }
 
 // ---------- 3. Парковка ночью: светящийся магазин, фонари, оранжевые деревья
-export function drawParking(c, W = 1280, H = 720) {
+export function drawParking(c, W = 1280, H = 720, o = {}) {
   seed = 37;
-  const sky = c.createLinearGradient(0, 0, 0, 420); sky.addColorStop(0, '#18204a'); sky.addColorStop(1, '#2c3266'); c.fillStyle = sky; c.fillRect(0, 0, W, 420);
+  const sky = c.createLinearGradient(0, 0, 0, 420); if (o.day) { sky.addColorStop(0, '#7fb2d9'); sky.addColorStop(1, '#d9e6ea'); } else { sky.addColorStop(0, '#18204a'); sky.addColorStop(1, '#2c3266'); } c.fillStyle = sky; c.fillRect(0, 0, W, 420);
+  if (o.sky) o.sky(c, W, 420);
   // дальние дома
   for (const [x, y, w] of [[0, 80, 290], [290, 150, 140], [880, 85, 400], [980, 160, 300]]) {
     rr(c, x, y, w, 340, 0, '#283364'); c.fillStyle = '#33407a';
@@ -203,7 +204,7 @@ export function drawParking(c, W = 1280, H = 720) {
   }
   // земля
   const lot = c.createLinearGradient(0, 400, 0, H); lot.addColorStop(0, '#d88772'); lot.addColorStop(1, '#f1a58a'); c.fillStyle = lot; c.fillRect(0, 395, W, H - 395);
-  glow(c, 640, 470, 520, '#ffb070', 0.25);
+  if (!o.day && !o.dead) glow(c, 640, 470, 520, '#ffb070', 0.25);
   // магазин
   poly(c, [[205, 262], [890, 262], [890, 450], [205, 450]], '#e9a08e', 3);
   poly(c, [[890, 222], [1130, 252], [1130, 455], [890, 450]], '#8d6f9e', 3);
@@ -211,18 +212,18 @@ export function drawParking(c, W = 1280, H = 720) {
   poly(c, [[205, 290], [890, 290], [890, 300], [205, 300]], '#2f3a5e');
   poly(c, [[860, 210], [890, 210], [890, 262], [860, 262]], '#f3b9a3', 3);
   // вывеска
-  rr(c, 510, 152, 278, 132, 4, '#c9402e', 4); rr(c, 516, 158, 266, 120, 2, '#ea5a3f'); glow(c, 650, 218, 200, '#ff6a40', 0.2);
+  rr(c, 510, 152, 278, 132, 4, '#c9402e', 4); rr(c, 516, 158, 266, 120, 2, o.dead ? '#a8402f' : '#ea5a3f'); if (!o.dead) glow(c, 650, 218, 200, '#ff6a40', 0.2);
   c.fillStyle = '#2b2f40'; c.fillRect(560, 284, 6, 10); c.fillRect(730, 284, 6, 10);
   // навес
   poly(c, [[422, 288], [968, 288], [968, 312], [422, 312]], '#4a6585', 3); poly(c, [[422, 312], [968, 312], [956, 326], [434, 326]], '#2f4562', 3);
   // витрины
-  const win = (x0, x1) => { const g = c.createLinearGradient(0, 320, 0, 440); g.addColorStop(0, '#fff1d6'); g.addColorStop(1, '#f6c98e');
+  const win = (x0, x1) => { const g = c.createLinearGradient(0, 320, 0, 440); g.addColorStop(0, o.dead ? '#2a3350' : '#fff1d6'); g.addColorStop(1, o.dead ? '#1c2238' : '#f6c98e');
     rr(c, x0, 320, x1 - x0, 122, 0, g, 3);
     for (let y = 352; y < 440; y += 30) { c.fillStyle = '#e6b07a'; c.fillRect(x0 + 4, y, x1 - x0 - 8, 4);
       for (let x = x0 + 10; x < x1 - 20; x += 34) if (rnd() < 0.7) rr(c, x, y - 14, 20 + rnd() * 10, 14, 2, ['#e8874a', '#d9663a', '#f0a45e'][Math.floor(rnd() * 3)]); }
     c.fillStyle = 'rgba(60,70,100,0.6)'; for (let x = x0 + 52; x < x1; x += 52) c.fillRect(x - 2, 320, 4, 122); };
   win(236, 448); win(458, 590); win(698, 860);
-  rr(c, 596, 345, 96, 98, 0, '#fff4df', 3.5); c.fillStyle = '#9aa1b5'; c.fillRect(641, 345, 5, 98); glow(c, 644, 395, 140, '#ffd59a', 0.35);
+  rr(c, 596, 345, 96, 98, 0, o.dead ? '#232b45' : '#fff4df', 3.5); c.fillStyle = '#9aa1b5'; c.fillRect(641, 345, 5, 98); if (!o.dead) glow(c, 644, 395, 140, '#ffd59a', 0.35);
   poly(c, [[205, 442], [1130, 442], [1130, 458], [205, 458]], '#c98b78', 2.5);
   rr(c, 980, 390, 26, 48, 2, '#ad4a3e', 2.5);
   // бордюр и тротуар
@@ -261,7 +262,7 @@ export function drawParking(c, W = 1280, H = 720) {
     c.save(); c.globalCompositeOperation = 'lighter'; const g = c.createLinearGradient(0, hy, 0, y + 20); g.addColorStop(0, 'rgba(255,190,110,0.22)'); g.addColorStop(1, 'rgba(255,190,110,0)');
     c.fillStyle = g; c.beginPath(); c.moveTo(hx - 18, hy); c.lineTo(hx + 18, hy); c.lineTo(hx + 150 * Math.abs(s), y + 20); c.lineTo(hx - 150 * Math.abs(s), y + 20); c.fill(); c.restore();
     rr(c, x - 10 * Math.abs(s), y - 6, 20 * Math.abs(s), 10, 3, '#b95527'); };
-  lamp(155, 535, 380, 1); lamp(1150, 560, 400, -1);
+  if (!o.dead && !o.day) { lamp(155, 535, 380, 1); lamp(1150, 560, 400, -1); }
   // тележки
   const cart = (x, y) => { c.strokeStyle = '#3a3f55'; c.lineWidth = 3; c.lineJoin = 'round';
     c.beginPath(); c.moveTo(x, y); c.lineTo(x + 60, y); c.lineTo(x + 52, y + 42); c.lineTo(x + 8, y + 42); c.closePath(); c.stroke();
@@ -274,5 +275,8 @@ export function drawParking(c, W = 1280, H = 720) {
   const leaves = (x, y, s) => { c.fillStyle = '#1b2242'; for (let i = 0; i < 6; i++) { const a = -2.6 + i * 0.42; c.save(); c.translate(x, y); c.rotate(a + Math.PI / 2);
     c.beginPath(); c.ellipse(0, -90 * s, 22 * s, 95 * s, 0, 0, 7); c.fill(); c.restore(); } };
   leaves(40, H + 30, 1.25); leaves(1250, H + 30, 1.25);
+  if (o.dead) { c.fillStyle = o.day ? 'rgba(80,90,110,0.18)' : 'rgba(8,10,30,0.45)'; c.fillRect(0, 0, W, H); }
   finish(c, W, H, 0.4);
 }
+
+export { poly, rr, glow, finish, mix, INK };
